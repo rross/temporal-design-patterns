@@ -1,8 +1,6 @@
 # Temporal Design Patterns
 
 > **Warning:** This catalog is under active development. Content and structure may change.
->
-> **Personal project by [@taonic](https://github.com/taonic).**
 
 Temporal provides a set of durable execution primitives that you can compose into common, reusable, and proven patterns.
 Having these patterns in your toolbox helps you solve recurring problems in a battle-tested way.
