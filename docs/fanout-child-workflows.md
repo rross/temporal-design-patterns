@@ -255,6 +255,33 @@ public class FanOutWorkflowImpl implements FanOutWorkflow {
         return total;
     }
 }
+
+// RecordBatchWorkflow.java
+@WorkflowInterface
+public interface RecordBatchWorkflow {
+    @WorkflowMethod
+    int run(int offset, int length);
+}
+
+// RecordBatchWorkflowImpl.java
+public class RecordBatchWorkflowImpl implements RecordBatchWorkflow {
+    private final Activities activities = Workflow.newActivityStub(
+        Activities.class,
+        ActivityOptions.newBuilder()
+            .setStartToCloseTimeout(Duration.ofSeconds(10))
+            .build()
+    );
+
+    @Override
+    public int run(int offset, int length) {
+        int processed = 0;
+        for (int i = offset; i < offset + length; i++) {
+            activities.processRecord(i);
+            processed++;
+        }
+        return processed;
+    }
+}
 ```
 :::
 

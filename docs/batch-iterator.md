@@ -212,17 +212,17 @@ public class BatchIteratorWorkflowImpl implements BatchIteratorWorkflow {
 
 ## Best Practices
 
-- **Choose a page size that keeps history under 2,000 events.** Each page produces roughly `2 × pageSize` history events (Activity scheduled + completed). A page size of 500–800 records is a safe target.
+- **Choose a page size that keeps history under 2,000 events.** Each page produces roughly `3 × pageSize` history events (`ActivityTaskScheduled` + `ActivityTaskStarted` + `ActivityTaskCompleted`). A page size of 500–800 records is a safe target.
 - **Include `totalProcessed` (or a similar counter) in the `continueAsNew` args.** This lets you observe overall progress via the Workflow input visible in the UI without querying internal state.
 - **Fetch inside an Activity, not the Workflow.** The `fetchPage` call must be an Activity — not inline Workflow code — so it can interact with external systems and be retried independently.
-- **Make `processRecord` idempotent.** If the Workflow is interrupted after some records in a page are processed but before `continueAsNew`, the next run replays the full page. Activities that have already completed are skipped by the replay, but your downstream system must tolerate duplicate calls in failure-recovery scenarios.
+- **Make `processRecord` idempotent.** Activities have at-least-once execution semantics. If a worker crashes after an Activity completes externally but before the completion is recorded in history, Temporal will retry it. Your downstream system must tolerate receiving the same record more than once.
 - **Avoid accumulating large local state between pages.** `continueAsNew` does not carry over in-memory state; only the arguments you pass are available in the next run.
 
 ## Common Pitfalls
 
 - **Forgetting `continueAsNew` on the last page.** If you call `continueAsNew` unconditionally, the Workflow loops forever even when the data source is exhausted. Check whether the returned page is shorter than `pageSize` before continuing.
-- **Passing mutable objects into `continueAsNew`.** All arguments are serialized. Pass only the minimal state needed (offset, counters) — not accumulated results or large data structures.
-- **Sequential processing bottlenecks.** The Batch Iterator processes one record at a time per page. If throughput matters more than rate limiting, consider [Sliding Window](sliding-window) or [MapReduce Tree](mapreduce-tree).
+- **Passing unnecessary state into `continueAsNew`.** All arguments are serialized and stored in history. Pass only the minimal state needed (offset, counters) — not accumulated result lists or large collections that grow with each page.
+- **Sequential processing bottlenecks.** The default implementation processes one record at a time per page. You can fan out Activities concurrently within a page using the SDK's async primitives for higher per-page throughput — note this increases per-page event count accordingly. If record-set-wide throughput matters more than rate limiting, consider [Sliding Window](sliding-window) or [MapReduce Tree](mapreduce-tree).
 
 ## Related Resources
 

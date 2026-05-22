@@ -2,7 +2,7 @@
 # MapReduce Tree
 
 :::info TLDR
-Recursively split a record set into a binary tree of child Workflows, process every leaf in parallel, and signal results back up the tree to the root. Use this when you need **maximum throughput** for an embarrassingly parallel workload and downstream systems can absorb an unbounded burst of concurrent requests.
+Recursively split a record set into a tree of child Workflows — each node fans out to N sub-slices (two by default) — process every leaf in parallel, and signal results back up the tree to the root. Use this when you need **maximum throughput** for an embarrassingly parallel workload and downstream systems can absorb an unbounded burst of concurrent requests.
 :::
 
 ## Overview
@@ -61,7 +61,7 @@ flowchart TD
 The following describes each step in the diagram:
 
 1. The Root Node Workflow receives the full record set and `depth=0`.
-2. Because the record set is larger than `leafThreshold`, the Root splits it into two chunks and starts two child Node Workflows.
+2. Because the record set is larger than `leafThreshold`, the Root splits it into N chunks and starts N child Node Workflows (two in this example, but the split factor is configurable).
 3. Each Node Workflow receives its chunk and checks its size against `leafThreshold`. In this example, each chunk is small enough, so each Node starts one Leaf Workflow per record.
 4. Each Leaf Workflow calls the `processRecord` Activity and, when complete, signals its result back to its parent Node using `signalExternalWorkflow`.
 5. Each Node collects all leaf results via signal handlers, aggregates them, and signals the aggregated result back to the Root.
@@ -400,6 +400,7 @@ public class NodeWorkflowImpl implements NodeWorkflow {
 - **Avoid external writes in Node Workflows.** Node Workflows only aggregate results from children. Leaf Workflows perform the actual work. Keeping the roles separate prevents duplicate external writes if a Node is retried.
 - **Use signals for result aggregation, not return values.** A parent cannot directly await a child started in a previous Workflow run. Signals decouple the result delivery from the parent-child lifetime, making the pattern resilient to replays.
 - **Skip the reduce phase if results are not needed.** If you only need the side effects of processing each record (writes to a database, messages sent), omit the signal-back entirely and set `PARENT_CLOSE_POLICY_ABANDON` on all children.
+- **Consider replacing Leaf Workflows with Activities for simpler workloads.** Leaf Workflows give each record its own history, independent cancellation, and dedicated visibility in the UI — useful when per-record observability matters. If those properties are not required, executing the `processRecord` Activity directly from a Node Workflow reduces overhead: each Leaf Workflow start and completion adds roughly 3 extra history events to the Node's history compared to a direct Activity call.
 
 ## Common Pitfalls
 
