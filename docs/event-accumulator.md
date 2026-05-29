@@ -175,7 +175,7 @@ class AccumulatorWorkflow:
                     return result
                 # More signals arrived after timeout/exit — loop to process them
 
-            if workflow.info().is_continue_as_new_suggested():
+            if not self._unprocessed and workflow.info().is_continue_as_new_suggested():
                 workflow.continue_as_new(args=[bucket_key, items, list(seen_set)])
 ```
 
@@ -216,6 +216,7 @@ func AccumulatorWorkflow(ctx workflow.Context, bucketKey string, items []OrderIt
             for k := range seenSet {
                 keys = append(keys, k)
             }
+            sort.Strings(keys) // deterministic order for replay
             return "", workflow.NewContinueAsNewError(ctx, AccumulatorWorkflow, bucketKey, accumulated, keys)
         }
 
@@ -344,7 +345,7 @@ It is not a good fit for use cases that require processing every event individua
 
 ## Benefits and trade-offs
 
-The Accumulator pattern reduces and simplifies downstream load by consolidating many individual events into a accumulated data element and activity call.
+The Accumulator pattern reduces downstream load by consolidating many individual events into a single batch and activity call.
 Signal-With-Start eliminates client-side coordination logic for starting or locating the collector workflow.
 Temporal's durable execution guarantees that accumulated state survives Worker restarts, and Continue-As-New prevents history growth from becoming a long-term problem.
 
@@ -361,6 +362,8 @@ If producers stop sending signals but never send an exit, the workflow holds ope
 - **Pass accumulated state as workflow arguments into each Continue-As-New run.** Workflow state does not survive a Continue-As-New transition automatically; always pass items and the seen-keys list as arguments to the new run.
 - **Keep signal handlers fast and side-effect free.** Signal handlers must not call activities or yield to the scheduler. Buffer incoming signals and process them in the main workflow loop.
 - **Add an exit signal for testing and operational runbooks.** An explicit exit signal lets you trigger early batch processing without waiting for the timeout, which is useful for end-to-end tests and manual intervention.
+- **Keep producer signal rate below 5/sec per workflow instance.** Each signal briefly locks the workflow execution. A sustained rate above roughly 5 signals/second causes workflow task backlog, limits throughput, and can eventually prevent Continue-As-New from completing. If your producer rate is higher, partition by a finer-grained key so each accumulator workflow receives a manageable share of the total signal volume.
+- **Account for the 10,000-signal-per-run limit on Temporal Cloud.** A single workflow run in Temporal Cloud can receive at most 10,000 signals. If your accumulation window is long and producers are active, ensure your Continue-As-New trigger fires well before the per-run signal count reaches this limit.
 
 ## Common pitfalls
 
@@ -371,6 +374,8 @@ If producers stop sending signals but never send an exit, the workflow holds ope
 - **Forgetting to pass accumulated state into Continue-As-New.** The new run starts with empty state and re-processes events from scratch, producing duplicate batches.
 - **Calling activities inside signal handlers.** Signal handlers run synchronously in the workflow thread and must not block or call activities. Buffer the item and let the main loop handle activity calls.
 - **Assuming workflow completion means all events were captured.** Producers that send signals after the workflow completes will start a new accumulator instance. Decide whether this is intentional (a new accumulation window) or an error.
+- **Signal rate too high to allow Continue-As-New to complete.** Continue-As-New requires a brief window (~100 ms) with no unhandled signals. If producers send signals continuously without pause, the workflow can never enter that window, history grows without bound, and Temporal will eventually terminate the workflow. Partition by a finer-grained key, throttle producers, or batch multiple events into a single signal payload to keep the per-instance signal rate low enough for CAN to succeed.
+- **Not draining the signal queue before calling Continue-As-New.** Any signal that arrives between the CAN decision and the actual CAN execution can be lost if the signal buffer is not empty when CAN fires. All SDK implementations in this pattern guard against this by re-checking the unprocessed queue before continuing; do not remove that guard or call CAN unconditionally on the history-size trigger.
 
 ## Related patterns
 

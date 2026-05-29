@@ -70,7 +70,7 @@ class AccumulatorWorkflow:
                     return result
                 # More signals arrived after timeout/exit — loop to process them
 
-            if workflow.info().is_continue_as_new_suggested():
+            if not self._unprocessed and workflow.info().is_continue_as_new_suggested():
                 # History growing large — continue as new, carrying state forward
                 workflow.logger.info(f"Continuing as new: {bucket_key}")
-                workflow.continue_as_new(args=[bucket_key, items, list(seen_set)])
+                workflow.continue_as_new(args=[bucket_key, items, sorted(seen_set)])

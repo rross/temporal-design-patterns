@@ -76,7 +76,9 @@ public interface AccumulatorWorkflow {
             // History growing large — continue as new, carrying accumulated state forward
             Workflow.getLogger(Impl.class).info("Continuing as new for " + bucketKey);
             AccumulatorWorkflow continueAsNew = Workflow.newContinueAsNewStub(AccumulatorWorkflow.class);
-            continueAsNew.accumulate(bucketKey, items, new ArrayList<>(seenSet));
+            List<String> seenKeysList = new ArrayList<>(seenSet);
+            java.util.Collections.sort(seenKeysList); // deterministic order for replay
+            continueAsNew.accumulate(bucketKey, items, seenKeysList);
             return ""; // unreachable — newContinueAsNewStub throws ContinueAsNewException
         }
 

@@ -2,6 +2,7 @@ package main
 package main
 
 import (
+	"sort"
 	"time"
 
 	"go.temporal.io/sdk/workflow"
@@ -52,6 +53,7 @@ func AccumulatorWorkflow(ctx workflow.Context, bucketKey string, items []OrderIt
 			for k := range seenSet {
 				keys = append(keys, k)
 			}
+			sort.Strings(keys) // deterministic order for replay
 			logger.Info("Continuing as new", "bucketKey", bucketKey, "count", len(accumulated))
 			return "", workflow.NewContinueAsNewError(ctx, AccumulatorWorkflow, bucketKey, accumulated, keys)
 		}
