@@ -176,7 +176,7 @@ class AccumulatorWorkflow:
                 # More signals arrived after timeout/exit — loop to process them
 
             if not self._unprocessed and workflow.info().is_continue_as_new_suggested():
-                workflow.continue_as_new(args=[bucket_key, items, list(seen_set)])
+                workflow.continue_as_new(args=[bucket_key, items, sorted(seen_set)])
 ```
 
 ```go [Go]
@@ -211,7 +211,7 @@ func AccumulatorWorkflow(ctx workflow.Context, bucketKey string, items []OrderIt
         if exitRequested {
             break
         }
-        if workflow.GetInfo(ctx).ContinueAsNewSuggested {
+        if workflow.GetInfo(ctx).GetContinueAsNewSuggested() {
             keys := make([]string, 0, len(seenSet))
             for k := range seenSet {
                 keys = append(keys, k)
@@ -275,7 +275,7 @@ public interface AccumulatorWorkflow {
         private final Activities activities = Workflow.newActivityStub(
             Activities.class,
             ActivityOptions.newBuilder()
-                .setStartToCloseTimeout(Duration.ofSeconds(10))
+                .setStartToCloseTimeout(Shared.MAX_AWAIT_TIME.plusSeconds(10))
                 .build());
 
         private final ArrayDeque<Shared.OrderItem> unprocessed = new ArrayDeque<>();
@@ -309,7 +309,9 @@ public interface AccumulatorWorkflow {
 
             // History growing large — continue as new, carrying accumulated state forward
             AccumulatorWorkflow continueAsNew = Workflow.newContinueAsNewStub(AccumulatorWorkflow.class);
-            continueAsNew.accumulate(bucketKey, items, new ArrayList<>(seenSet));
+            List<String> seenKeysList = new ArrayList<>(seenSet);
+            java.util.Collections.sort(seenKeysList); // deterministic order for replay
+            continueAsNew.accumulate(bucketKey, items, seenKeysList);
             return ""; // unreachable
         }
 
