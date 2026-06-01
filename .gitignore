@@ -12,3 +12,8 @@ uv.lock
 
 # Java build artifacts
 target
+
+# Working notes and drafts
+todo.md
+batch_workflow_design_best_practices.md
+Design & Best Practices Guide.md

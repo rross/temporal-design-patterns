@@ -1,5 +1,4 @@
 package main
-package main
 
 import (
 	"sort"
@@ -48,7 +47,7 @@ func AccumulatorWorkflow(ctx workflow.Context, bucketKey string, items []OrderIt
 		}
 
 		// Check history size before entering the next wait
-		if workflow.GetInfo(ctx).ContinueAsNewSuggested {
+		if workflow.GetInfo(ctx).GetContinueAsNewSuggested() {
 			keys := make([]string, 0, len(seenSet))
 			for k := range seenSet {
 				keys = append(keys, k)
