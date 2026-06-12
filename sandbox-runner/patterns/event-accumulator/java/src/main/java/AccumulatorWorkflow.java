@@ -28,7 +28,7 @@ public interface AccumulatorWorkflow {
     void addItem(Shared.OrderItem item);
 
     @SignalMethod
-    void exit();
+    void flush();
 
     class Impl implements AccumulatorWorkflow {
 
@@ -40,7 +40,7 @@ public interface AccumulatorWorkflow {
 
         // Buffer for signals received before the main loop drains them
         private final ArrayDeque<Shared.OrderItem> unprocessed = new ArrayDeque<>();
-        private boolean exitRequested = false;
+        private boolean flushRequested = false;
 
         @Override
         public String accumulate(String bucketKey, List<Shared.OrderItem> itemsInput, List<String> seenKeysInput) {
@@ -52,7 +52,7 @@ public interface AccumulatorWorkflow {
                 // Sliding window: wait for a signal or let the inactivity timer fire
                 boolean timedOut = !Workflow.await(
                         Shared.MAX_AWAIT_TIME,
-                        () -> !unprocessed.isEmpty() || exitRequested);
+                        () -> !unprocessed.isEmpty() || flushRequested);
 
                 // Drain and deduplicate the signal queue
                 while (!unprocessed.isEmpty()) {
@@ -62,14 +62,14 @@ public interface AccumulatorWorkflow {
                     }
                 }
 
-                if (timedOut || exitRequested) {
+                if (timedOut || flushRequested) {
                     String result = activities.processItems(bucketKey, items);
                     Workflow.getLogger(Impl.class).info(
                             "Processed batch for " + bucketKey + " with " + items.size() + " items");
                     if (unprocessed.isEmpty()) {
                         return result;
                     }
-                    // More signals arrived after timeout/exit — loop to process them
+                    // More signals arrived after timeout/flush — loop to process them
                 }
             } while (!unprocessed.isEmpty() || !Workflow.getInfo().isContinueAsNewSuggested());
 
@@ -89,8 +89,8 @@ public interface AccumulatorWorkflow {
         }
 
         @Override
-        public void exit() {
-            exitRequested = true;
+        public void flush() {
+            flushRequested = true;
         }
     }
 }

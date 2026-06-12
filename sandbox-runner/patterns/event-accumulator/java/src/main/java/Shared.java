@@ -1,5 +1,4 @@
 import java.time.Duration;
-import java.util.List;
 
 public final class Shared {
     public static final String TASK_QUEUE = "accumulator-task-queue";

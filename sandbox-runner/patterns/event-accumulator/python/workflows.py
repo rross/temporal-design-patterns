@@ -21,16 +21,16 @@ class AccumulatorWorkflow:
     def __init__(self) -> None:
         # Buffer for signals received before the main loop drains them
         self._unprocessed: deque[OrderItem] = deque()
-        self._exit_requested = False
+        self._flush_requested = False
 
     @workflow.signal(name="add-item")
     async def add_item(self, item: OrderItem) -> None:
         # Signal handlers just buffer — no activity calls inside handlers
         self._unprocessed.append(item)
 
-    @workflow.signal(name="exit")
-    async def exit_workflow(self) -> None:
-        self._exit_requested = True
+    @workflow.signal(name="flush")
+    async def flush(self) -> None:
+        self._flush_requested = True
 
     @workflow.run
     async def run(
@@ -46,7 +46,7 @@ class AccumulatorWorkflow:
         while True:
             # Sliding window: block until a signal arrives or the timer expires
             timed_out = not await workflow.wait_condition(
-                lambda: bool(self._unprocessed) or self._exit_requested,
+                lambda: bool(self._unprocessed) or self._flush_requested,
                 timeout=timedelta(seconds=10),
             )
 
@@ -57,7 +57,7 @@ class AccumulatorWorkflow:
                     seen_set.add(item.item_id)
                     items.append(item)
 
-            if timed_out or self._exit_requested:
+            if timed_out or self._flush_requested:
                 result = await workflow.execute_activity(
                     process_items,
                     args=[bucket_key, items],
@@ -68,7 +68,7 @@ class AccumulatorWorkflow:
                 )
                 if not self._unprocessed:
                     return result
-                # More signals arrived after timeout/exit — loop to process them
+                # More signals arrived after timeout/flush — loop to process them
 
             if not self._unprocessed and workflow.info().is_continue_as_new_suggested():
                 # History growing large — continue as new, carrying state forward

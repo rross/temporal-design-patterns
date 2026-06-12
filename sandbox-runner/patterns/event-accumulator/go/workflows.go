@@ -23,8 +23,8 @@ func AccumulatorWorkflow(ctx workflow.Context, bucketKey string, items []OrderIt
 	accumulated := append([]OrderItem{}, items...)
 
 	addItemCh := workflow.GetSignalChannel(ctx, "add-item")
-	exitCh := workflow.GetSignalChannel(ctx, "exit")
-	exitRequested := false
+	flushCh := workflow.GetSignalChannel(ctx, "flush")
+	flushRequested := false
 
 	for {
 		// Drain any signals that arrived before or during the previous iteration
@@ -38,11 +38,11 @@ func AccumulatorWorkflow(ctx workflow.Context, bucketKey string, items []OrderIt
 				accumulated = append(accumulated, item)
 			}
 		}
-		var voidExit interface{}
-		if exitCh.ReceiveAsync(&voidExit) {
-			exitRequested = true
+		var voidFlush interface{}
+		if flushCh.ReceiveAsync(&voidFlush) {
+			flushRequested = true
 		}
-		if exitRequested {
+		if flushRequested {
 			break
 		}
 
@@ -71,15 +71,15 @@ func AccumulatorWorkflow(ctx workflow.Context, bucketKey string, items []OrderIt
 				accumulated = append(accumulated, item)
 			}
 		})
-		selector.AddReceive(exitCh, func(c workflow.ReceiveChannel, _ bool) {
+		selector.AddReceive(flushCh, func(c workflow.ReceiveChannel, _ bool) {
 			var void interface{}
 			c.Receive(ctx, &void)
-			exitRequested = true
+			flushRequested = true
 		})
 		selector.Select(ctx)
 		cancelTimer() // no-op if timer already fired; cancels timer if a signal arrived first
 
-		if timedOut || exitRequested {
+		if timedOut || flushRequested {
 			break
 		}
 	}

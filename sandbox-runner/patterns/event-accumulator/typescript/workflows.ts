@@ -16,7 +16,7 @@ const { processItems } = proxyActivities<typeof activities>({
 });
 
 export const addItemSignal = defineSignal<[OrderItem]>("add-item");
-export const exitSignal = defineSignal("exit");
+export const flushSignal = defineSignal("flush");
 
 /**
  * Accumulator workflow: collects order items sent via signals, deduplicates
@@ -34,20 +34,20 @@ export async function accumulatorWorkflow(
   const items: OrderItem[] = [...accumulated];
   // Buffer for signals received before the main loop drains them
   const unprocessed: OrderItem[] = [];
-  let exitRequested = false;
+  let flushRequested = false;
 
   // Signal handlers just buffer — no activity calls inside handlers
   setHandler(addItemSignal, (item: OrderItem) => {
     unprocessed.push(item);
   });
-  setHandler(exitSignal, () => {
-    exitRequested = true;
+  setHandler(flushSignal, () => {
+    flushRequested = true;
   });
 
   do {
     // Sliding window: block until a signal arrives or the timer expires
     const timedOut = !(await condition(
-      () => unprocessed.length > 0 || exitRequested,
+      () => unprocessed.length > 0 || flushRequested,
       "10 seconds",
     ));
 
@@ -60,11 +60,11 @@ export async function accumulatorWorkflow(
       }
     }
 
-    if (timedOut || exitRequested) {
+    if (timedOut || flushRequested) {
       const result = await processItems(bucketKey, items);
       log.info("Processed order batch", { bucketKey, count: items.length });
       if (unprocessed.length === 0) return result;
-      // More signals arrived after timeout/exit — loop to process them
+      // More signals arrived after timeout/flush — loop to process them
     }
   } while (unprocessed.length > 0 || !workflowInfo().continueAsNewSuggested);
 

@@ -8,7 +8,8 @@ Use the Event Accumulator pattern to **durably collect and process events from m
 ## Overview
 
 The Accumulator pattern groups a stream of incoming events by a key and processes them together as a batch.
-A single workflow instance per key receives signals as events arrive, deduplicates them, and waits with a sliding inactivity timer.
+A *group key* is a stable, domain-specific identifier — for example, an order ID, customer ID, or session token — that logically binds related events belonging to the same accumulation window.
+A single workflow instance per group key receives signals as events arrive, deduplicates them, and waits with a sliding inactivity timer.
 When no new events arrive within the timeout window, the workflow calls a batch processing activity and completes.
 
 ## Problem
@@ -30,7 +31,7 @@ Without the Accumulator pattern, you must:
 You assign each group a deterministic workflow ID derived from the group key (for example, `accumulator-order-123`).
 Producers call Signal-With-Start so the workflow is created on first use and receives additional signals on subsequent calls — without any client-side coordination.
 Inside the workflow, `Workflow.await()` with a timeout implements a sliding inactivity window: each arriving signal resets the countdown.
-When the countdown expires — or when an explicit exit signal is sent — the workflow passes all accumulated, deduplicated events to a batch processing activity and completes.
+When the countdown expires — or when an explicit flush signal is sent — the workflow passes all accumulated, deduplicated events to a batch processing activity and completes.
 If the accumulation period is long enough to grow the workflow history near its limit, the workflow uses Continue-As-New to carry its state forward into a fresh run.
 
 ```mermaid
@@ -64,7 +65,7 @@ The following describes each step in the diagram:
 
 1. A producer calls Signal-With-Start with `order-A` as the bucket key. Temporal starts `accumulator-order-A` and delivers the first `add-item` signal. The workflow adds `item-1` to its list and starts the inactivity timer.
 2. A second producer calls Signal-With-Start for the same order. Temporal finds the workflow already running and delivers the signal — no new instance is created. The workflow adds `item-2` and resets the timer.
-3. The first producer retries `item-1` due to at-least-once delivery. The workflow checks its deduplication set, finds `item-1` already recorded, and discards the duplicate.
+3. The first producer retries `item-1` due to at-least-once delivery. The workflow checks its deduplication set, finds `item-1` already recorded, and discards the duplicate. Alternatively, you can replace the existing record with the new payload — useful when a producer may resend an updated version of the same event under the same key.
 4. No new signals arrive within the inactivity window. The `Workflow.await()` condition times out.
 5. The workflow calls `processItems` with all accumulated items. The activity returns a result, and the workflow completes.
 
@@ -87,19 +88,19 @@ export async function accumulatorWorkflow(
   const seenSet = new Set(seenKeys);
   const items: OrderItem[] = [...accumulated];
   const unprocessed: OrderItem[] = [];
-  let exitRequested = false;
+  let flushRequested = false;
 
   setHandler(addItemSignal, (item: OrderItem) => {
     unprocessed.push(item);
   });
-  setHandler(exitSignal, () => {
-    exitRequested = true;
+  setHandler(flushSignal, () => {
+    flushRequested = true;
   });
 
   do {
     // Sliding window: wait for a signal or let the inactivity timer fire
     const timedOut = !(await condition(
-      () => unprocessed.length > 0 || exitRequested,
+      () => unprocessed.length > 0 || flushRequested,
       "10 seconds",
     ));
 
@@ -112,10 +113,10 @@ export async function accumulatorWorkflow(
       }
     }
 
-    if (timedOut || exitRequested) {
+    if (timedOut || flushRequested) {
       const result = await processItems(bucketKey, items);
       if (unprocessed.length === 0) return result;
-      // More signals arrived after timeout/exit — loop to process them
+      // More signals arrived after timeout/flush — loop to process them
     }
   } while (unprocessed.length > 0 || !workflowInfo().continueAsNewSuggested);
 
@@ -131,15 +132,15 @@ export async function accumulatorWorkflow(
 class AccumulatorWorkflow:
     def __init__(self) -> None:
         self._unprocessed: deque[OrderItem] = deque()
-        self._exit_requested = False
+        self._flush_requested = False
 
     @workflow.signal(name="add-item")
     async def add_item(self, item: OrderItem) -> None:
         self._unprocessed.append(item)
 
-    @workflow.signal(name="exit")
-    async def exit_workflow(self) -> None:
-        self._exit_requested = True
+    @workflow.signal(name="flush")
+    async def flush(self) -> None:
+        self._flush_requested = True
 
     @workflow.run
     async def run(
@@ -154,7 +155,7 @@ class AccumulatorWorkflow:
         while True:
             # Sliding window: wait for a signal or let the inactivity timer fire
             timed_out = not await workflow.wait_condition(
-                lambda: bool(self._unprocessed) or self._exit_requested,
+                lambda: bool(self._unprocessed) or self._flush_requested,
                 timeout=timedelta(seconds=10),
             )
 
@@ -165,7 +166,7 @@ class AccumulatorWorkflow:
                     seen_set.add(item.item_id)
                     items.append(item)
 
-            if timed_out or self._exit_requested:
+            if timed_out or self._flush_requested:
                 result = await workflow.execute_activity(
                     process_items,
                     args=[bucket_key, items],
@@ -173,7 +174,7 @@ class AccumulatorWorkflow:
                 )
                 if not self._unprocessed:
                     return result
-                # More signals arrived after timeout/exit — loop to process them
+                # More signals arrived after timeout/flush — loop to process them
 
             if not self._unprocessed and workflow.info().is_continue_as_new_suggested():
                 workflow.continue_as_new(args=[bucket_key, items, sorted(seen_set)])
@@ -189,8 +190,8 @@ func AccumulatorWorkflow(ctx workflow.Context, bucketKey string, items []OrderIt
     accumulated := append([]OrderItem{}, items...)
 
     addItemCh := workflow.GetSignalChannel(ctx, "add-item")
-    exitCh := workflow.GetSignalChannel(ctx, "exit")
-    exitRequested := false
+    flushCh := workflow.GetSignalChannel(ctx, "flush")
+    flushRequested := false
 
     for {
         // Drain any signals buffered before this iteration
@@ -204,11 +205,11 @@ func AccumulatorWorkflow(ctx workflow.Context, bucketKey string, items []OrderIt
                 accumulated = append(accumulated, item)
             }
         }
-        var voidExit interface{}
-        if exitCh.ReceiveAsync(&voidExit) {
-            exitRequested = true
+        var voidFlush interface{}
+        if flushCh.ReceiveAsync(&voidFlush) {
+            flushRequested = true
         }
-        if exitRequested {
+        if flushRequested {
             break
         }
         if workflow.GetInfo(ctx).GetContinueAsNewSuggested() {
@@ -234,15 +235,15 @@ func AccumulatorWorkflow(ctx workflow.Context, bucketKey string, items []OrderIt
                 accumulated = append(accumulated, item)
             }
         })
-        selector.AddReceive(exitCh, func(c workflow.ReceiveChannel, _ bool) {
+        selector.AddReceive(flushCh, func(c workflow.ReceiveChannel, _ bool) {
             var void interface{}
             c.Receive(ctx, &void)
-            exitRequested = true
+            flushRequested = true
         })
         selector.Select(ctx)
         cancelTimer() // no-op if timer already fired; cancels timer if a signal arrived
 
-        if timedOut || exitRequested {
+        if timedOut || flushRequested {
             break
         }
     }
@@ -269,7 +270,7 @@ public interface AccumulatorWorkflow {
     void addItem(Shared.OrderItem item);
 
     @SignalMethod
-    void exit();
+    void flush();
 
     class Impl implements AccumulatorWorkflow {
         private final Activities activities = Workflow.newActivityStub(
@@ -279,7 +280,7 @@ public interface AccumulatorWorkflow {
                 .build());
 
         private final ArrayDeque<Shared.OrderItem> unprocessed = new ArrayDeque<>();
-        private boolean exitRequested = false;
+        private boolean flushRequested = false;
 
         @Override
         public String accumulate(String bucketKey, List<Shared.OrderItem> itemsInput, List<String> seenKeysInput) {
@@ -290,7 +291,7 @@ public interface AccumulatorWorkflow {
                 // Sliding window: wait for a signal or let the inactivity timer fire
                 boolean timedOut = !Workflow.await(
                     Shared.MAX_AWAIT_TIME,
-                    () -> !unprocessed.isEmpty() || exitRequested);
+                    () -> !unprocessed.isEmpty() || flushRequested);
 
                 // Drain and deduplicate the signal queue
                 while (!unprocessed.isEmpty()) {
@@ -300,10 +301,10 @@ public interface AccumulatorWorkflow {
                     }
                 }
 
-                if (timedOut || exitRequested) {
+                if (timedOut || flushRequested) {
                     String result = activities.processItems(bucketKey, items);
                     if (unprocessed.isEmpty()) return result;
-                    // More signals arrived after timeout/exit — loop to process them
+                    // More signals arrived after timeout/flush — loop to process them
                 }
             } while (!unprocessed.isEmpty() || !Workflow.getInfo().isContinueAsNewSuggested());
 
@@ -321,8 +322,8 @@ public interface AccumulatorWorkflow {
         }
 
         @Override
-        public void exit() {
-            exitRequested = true;
+        public void flush() {
+            flushRequested = true;
         }
     }
 }
@@ -341,7 +342,7 @@ Producers in all SDKs call Signal-With-Start to atomically start the workflow if
 
 ## When to use
 
-The Accumulator pattern is well suited when events related to the same entity or group arrive from multiple producers and can be processed together as in batches or groups, when downstream systems prefer batched calls rather than one call per event, and when at-least-once event delivery makes deduplication necessary at the collection layer.
+The Accumulator pattern is well suited when events related to the same entity or group arrive from multiple producers — including a single consumer (for example, a Kafka consumer) polling a topic that carries events for multiple groups simultaneously — and can be processed together as batches, when downstream systems prefer batched calls rather than one call per event, and when at-least-once event delivery makes deduplication necessary at the collection layer.
 
 It is not a good fit for use cases that require processing every event individually in _strict order_, for cases where the batch size is known in advance and all events arrive within a short deterministic window (a standard workflow is sufficient), or when events for different keys must be correlated at processing time (consider fan-in with e.g. Child Workflows or multiple levels of Accumulator).
 
@@ -351,9 +352,9 @@ The Accumulator pattern reduces downstream load by consolidating many individual
 Signal-With-Start eliminates client-side coordination logic for starting or locating the collector workflow.
 Temporal's durable execution guarantees that accumulated state survives Worker restarts, and Continue-As-New prevents history growth from becoming a long-term problem.
 
-The trade-offs to consider are that events are not processed until the inactivity timeout fires or an exit signal is sent, introducing intentional latency.
+The trade-offs to consider are that events are not processed until the inactivity timeout fires or a flush signal is sent, introducing intentional latency.
 The timeout value is a domain-specific trade-off between latency and batch size.
-If producers stop sending signals but never send an exit, the workflow holds open resources until the timeout fires.
+If producers stop sending signals but never send a flush, the workflow holds open resources until the timeout fires.
 
 ## Best practices
 
@@ -361,9 +362,9 @@ If producers stop sending signals but never send an exit, the workflow holds ope
 - **Always use Signal-With-Start from producers.** Calling start and signal separately is not atomic: a signal sent between the two calls can be lost if the workflow has not yet started.
 - **Include a deduplication key in every signal payload.** At-least-once delivery is common in event streams; without a dedup key, retried events add duplicate entries to the batch.
 - **Size the inactivity timeout to your domain's quiet period.** The timeout should reflect how long you are confident no more events will arrive for this batch. Tune it based on observed producer behavior, not an arbitrary constant.
-- **Pass accumulated state as workflow arguments into each Continue-As-New run.** Workflow state does not survive a Continue-As-New transition automatically; always pass items and the seen-keys list as arguments to the new run.
+- **Pass accumulated state as workflow arguments into each Continue-As-New run.** Workflow state does not survive a Continue-As-New transition automatically; always pass items and the seen-keys list as arguments to the new run. If you omit the seen-keys list, any signal delivered to both the old and new run during the Continue-As-New handoff will be processed again in the new run, producing duplicate entries in the batch.
 - **Keep signal handlers fast and side-effect free.** Signal handlers must not call activities or yield to the scheduler. Buffer incoming signals and process them in the main workflow loop.
-- **Add an exit signal for testing and operational runbooks.** An explicit exit signal lets you trigger early batch processing without waiting for the timeout, which is useful for end-to-end tests and manual intervention.
+- **Add a flush signal for testing and operational runbooks.** An explicit flush signal lets you trigger early batch processing without waiting for the timeout, which is useful for end-to-end tests and manual intervention.
 - **Keep producer signal rate below 5/sec per workflow instance.** Each signal briefly locks the workflow execution. A sustained rate above roughly 5 signals/second causes workflow task backlog, limits throughput, and can eventually prevent Continue-As-New from completing. If your producer rate is higher, partition by a finer-grained key so each accumulator workflow receives a manageable share of the total signal volume.
 - **Account for the 10,000-signal-per-run limit on Temporal Cloud.** A single workflow run in Temporal Cloud can receive at most 10,000 signals. If your accumulation window is long and producers are active, ensure your Continue-As-New trigger fires well before the per-run signal count reaches this limit.
 
