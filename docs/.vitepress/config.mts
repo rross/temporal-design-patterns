@@ -97,6 +97,15 @@ export default withMermaid(defineConfig({
           { text: 'MapReduce Tree', link: '/mapreduce-tree' }
         ]
       },
+      {
+        text: 'Performance & Latency Patterns',
+        items: [
+          { text: 'Overview', link: '/performance-latency-patterns' },
+          { text: 'Local Activities', link: '/local-activities' },
+          { text: 'Early Return + Local Activities', link: '/early-return-local-activities' },
+          { text: 'Eager Workflow Start', link: '/eager-workflow-start' }
+        ]
+      },
     ],
     socialLinks: [
       { icon: 'github', link: 'https://github.com/taonic/temporal-design-patterns' }

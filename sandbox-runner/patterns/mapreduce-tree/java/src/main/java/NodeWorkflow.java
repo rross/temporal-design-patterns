@@ -80,7 +80,7 @@ public interface NodeWorkflow {
 
             // Signal aggregated results up to parent (if not root).
             if (parentWorkflowId != null && !parentWorkflowId.isEmpty()) {
-                ExternalWorkflowStub parent = Workflow.newUntypedExternalWorkflowStub(parentWorkflowId, "");
+                ExternalWorkflowStub parent = Workflow.newUntypedExternalWorkflowStub(parentWorkflowId);
                 parent.signal(Shared.RESULT_SIGNAL, myId, new ArrayList<>(collected));
             }
 
@@ -101,7 +101,7 @@ public interface NodeWorkflow {
             Workflow.getLogger(LeafImpl.class)
                     .info("Leaf processed: {} → {}", record, result);
 
-            ExternalWorkflowStub parent = Workflow.newUntypedExternalWorkflowStub(parentWorkflowId, "");
+            ExternalWorkflowStub parent = Workflow.newUntypedExternalWorkflowStub(parentWorkflowId);
             parent.signal(Shared.RESULT_SIGNAL, record, List.of(result));
         }
     }
