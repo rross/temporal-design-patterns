@@ -270,7 +270,7 @@ If the business process has a maximum wait time, add a `ScheduleToCloseTimeout` 
 ## Best practices
 
 - **Log the phase transition.** The transition from fast to slow is a meaningful signal that the downstream system may have a sustained problem. Log it with enough context — request identifier, attempt count, timestamp — to aid diagnosis.
-- **Leave `MaximumAttempts` unset in Phase 2.** Omitting `MaximumAttempts` (or setting it to 0) gives the slow phase unlimited retries. The Temporal Service manages the wait between attempts via `InitialInterval`; the Workflow simply blocks until the Activity eventually succeeds.
+- **Leave `MaximumAttempts` unset in Phase 2.** Omitting `MaximumAttempts` (or setting it to 0) gives the slow phase unlimited retries. The Temporal Service manages the wait between attempts via `InitialInterval`; the Workflow blocks until the Activity eventually succeeds.
 - **Combine with Retry Alerting via Metrics.** Add a metric counter inside the Activity to surface slow-phase attempts to on-call teams. See [Retry Alerting via Metrics](retry-metrics.md).
 
 ## Common pitfalls

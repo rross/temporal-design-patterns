@@ -32,14 +32,14 @@ Conventional mitigations — distributed locks, outbox tables, idempotency middl
 
 Temporal replaces this custom infrastructure with three built-in guarantees:
 
-1. **Exactly-once Workflow execution per ID.** If you use the client-supplied request reference as the Workflow ID, Temporal rejects any duplicate `StartWorkflow` call for a running or completed execution. Client retries are handled automatically at the platform level.
+1. **Exactly-once Workflow execution per ID.** If you use the client-supplied request reference as the Workflow ID, Temporal rejects a duplicate `StartWorkflow` call while an execution with that ID is already running. To also reject duplicates after the first execution has closed, set the Workflow ID Reuse Policy to `Reject Duplicate` (the default policy, `Allow Duplicate`, permits a new execution once the prior one closes). Client retries are handled at the platform level.
 
-2. **Durable activity state.** When a Worker crashes mid-execution, Temporal replays the Workflow from its event history on any available Worker. Activities that already completed are not re-executed — their results are replayed from history. Activities that were in-flight are retried from scratch, so each activity must be idempotent, but no activity runs more than once to completion.
+2. **Durable activity state.** When a Worker crashes mid-execution, Temporal replays the Workflow from its event history on any available Worker. Activities whose completion was recorded in history are not re-executed — their results are replayed from history. Activities follow an at-least-once execution model: a Worker can run an activity to completion and then crash before reporting the result, in which case Temporal retries it and the activity runs again. For this reason each activity must be idempotent.
 
 3. **Deterministic idempotency keys.** Because the Workflow replays deterministically, any value derived from `workflow.info().workflowId` and a per-step constant is identical on every replay attempt. You pass these keys to external systems so that retried activity calls are recognized as duplicates and skipped.
 
 The example used throughout this pattern is an **outward interbank payment** from a source bank to a government/industry-managed payment switch (such as NPCI/UPI, SEPA, NPP, FedNow/RTP or SWIFT).
-The destination bank leg is out of scope — we focus only on what the source bank's system must do to send money out reliably.
+The destination bank leg is out of scope — this pattern focuses only on what the source bank's system must do to send money out reliably.
 
 The workflow has four steps, each with a registered compensation:
 
@@ -110,7 +110,7 @@ The following describes each step:
 
 There are two distinct failure scenarios after step 3 — and they require different compensation paths.
 
-**Scenario A — submit activity fails (Worker crash or switch error):** The submit activity returns an error. We do not know if the switch received the instruction, so we must query before cancelling.
+**Scenario A — submit activity fails (Worker crash or switch error):** The submit activity returns an error. You do not know whether the switch received the instruction, so you must query before cancelling.
 
 **Scenario B — SLA deadline exceeded waiting for the callback signal:** The submit activity succeeded (switch accepted the instruction), but the switch never sent the callback within the SLA window. The Workflow's signal wait times out.
 
@@ -341,7 +341,7 @@ export async function reconcileSubmission(params: ReconcileParams): Promise<stri
 
 | | |
 |---|---|
-| **Pros** | Most robust. Resolves every ambiguous crash scenario. Does not depend on the switch having a query API. Reconciliation reads your own data. |
+| **Pros** | Resolves every ambiguous crash scenario. Does not depend on the switch having a query API. Reconciliation reads your own data. |
 | **Cons** | Requires a `switch_callbacks` table and a webhook handler that writes to it. More moving parts than Options A–C. |
 | **Best for** | Switches with no query API and no client reference field. Also the right fallback when Options A or B are unavailable. |
 
@@ -453,7 +453,7 @@ No resources are created or destroyed by a partial failure — they are either f
 
 External systems have contractual SLAs (for example, respond within 30 seconds).
 You enforce the SLA by setting `ScheduleToCloseTimeout` on the delivery activity.
-This timeout covers all retries of the activity, not just a single attempt.
+This timeout covers all retries of the activity, not only a single attempt.
 If the external system does not confirm within the SLA window, the activity fails deterministically and compensation begins.
 
 ## Implementation
@@ -576,6 +576,7 @@ Idempotency keys are derived in the Workflow function — never inside activitie
 ::: code-group
 ```python [Python]
 # payment_workflow.py
+import asyncio
 from datetime import timedelta
 from dataclasses import dataclass, field
 from temporalio import workflow
@@ -669,13 +670,19 @@ class InterBankPaymentWorkflow:
             # Step 3b: Wait for switch callback signal (SLA = 60 seconds)
             # The Workflow is durably suspended here — no polling, no thread blocking.
             # If the Worker restarts, Temporal replays to this point and waits again.
-            confirmed = await workflow.wait_condition(
-                lambda: self._switch_callback is not None,
-                timeout=timedelta(seconds=60),
-            )
-            if not confirmed or self._switch_callback.status != "SUCCESS":
-                reason = self._switch_callback.reason if self._switch_callback else "SLA timeout"
-                raise RuntimeError(f"Switch did not confirm transfer: {reason}")
+            # wait_condition raises asyncio.TimeoutError when the timeout elapses
+            # before the condition becomes true.
+            try:
+                await workflow.wait_condition(
+                    lambda: self._switch_callback is not None,
+                    timeout=timedelta(seconds=60),
+                )
+            except asyncio.TimeoutError:
+                raise RuntimeError("Switch did not confirm transfer: SLA timeout")
+            if self._switch_callback.status != "SUCCESS":
+                raise RuntimeError(
+                    f"Switch did not confirm transfer: {self._switch_callback.reason}"
+                )
 
             # Step 4: Debit and settle
             # Only reached after switch signals SUCCESS — now safe to move funds
@@ -796,15 +803,15 @@ func InterBankPaymentWorkflow(ctx workflow.Context, req PaymentRequest) (string,
     // Step 3b: Wait for switch callback signal (SLA = 60 seconds)
     // The Workflow is durably suspended here — no polling, no thread blocking.
     // If the Worker restarts, Temporal replays to this point and waits again.
-    slaCtx, cancel := workflow.WithCancel(ctx)
-    defer cancel()
-    _ = workflow.NewTimer(slaCtx, 60*time.Second)
-
-    workflow.Await(ctx, func() bool {
+    // AwaitWithTimeout returns ok=false if the timeout elapses first.
+    var ok bool
+    ok, err = workflow.AwaitWithTimeout(ctx, 60*time.Second, func() bool {
         return switchCallback != nil
     })
-
-    if switchCallback == nil {
+    if err != nil {
+        return "", err
+    }
+    if !ok || switchCallback == nil {
         err = fmt.Errorf("SLA timeout: switch did not confirm within 60s")
         return "", err
     }
@@ -1031,8 +1038,8 @@ export async function interBankPaymentWorkflow(req: PaymentRequest): Promise<str
 
 The key differences between SDKs for the Signal wait are:
 
-- **Python**: `workflow.wait_condition(lambda: ..., timeout=timedelta(...))` — returns `False` on timeout.
-- **Go**: `workflow.Await(ctx, func() bool { ... })` with a timer-based cancel context for the SLA deadline.
+- **Python**: `workflow.wait_condition(lambda: ..., timeout=timedelta(...))` — raises `asyncio.TimeoutError` on timeout, so wrap it in `try`/`except`.
+- **Go**: `workflow.AwaitWithTimeout(ctx, 60*time.Second, func() bool { ... })` — returns `ok=false` on timeout.
 - **Java**: `Workflow.await(Duration.ofSeconds(60), () -> condition)` — returns `false` on timeout.
 - **TypeScript**: `condition(() => ..., '60s')` — returns `false` on timeout.
 
@@ -1311,7 +1318,7 @@ The following table maps each failure scenario in the interbank payment example 
 ## Best practices
 
 - **Derive idempotency keys in the Workflow, not the Activity.** Keys generated inside an Activity are recomputed on each retry and defeat de-duplication. Keys derived from `workflow.info().workflowId` and a step constant are stable across all replays.
-- **Use the client-supplied request reference as the Workflow ID.** This makes the Workflow ID the outer idempotency key. Temporal rejects a duplicate `StartWorkflow` call for a running or completed Workflow automatically.
+- **Use the client-supplied request reference as the Workflow ID.** This makes the Workflow ID the outer idempotency key. Temporal rejects a duplicate `StartWorkflow` call while an execution with that ID is running. To extend this rejection to already-closed executions within the retention period, set the Workflow ID Reuse Policy to `Reject Duplicate`.
 - **Use `ScheduleToCloseTimeout` for external SLA enforcement.** `StartToCloseTimeout` restarts on each retry. `ScheduleToCloseTimeout` covers the full activity lifecycle including all retries and maps directly to a contractual SLA.
 - **Use distinct keys for forward and compensation activities.** Reusing the same key causes the external system to reject the compensation as a duplicate of the original call.
 - **Register compensations before Activity execution.** This ensures cleanup runs even if the Activity fails after a partial side effect has occurred.

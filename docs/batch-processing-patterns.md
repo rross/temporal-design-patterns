@@ -21,7 +21,7 @@ Choose based on your throughput requirements, record set size, and whether you n
 <div class="pattern-tile-header">
 <span>Fan-Out with Child Workflows</span>
 </div>
-<p>Splits a record set into fixed-size chunks and assigns each to an independent child Workflow. Simple to reason about; best for record sets up to ~4M items.</p>
+<p>Splits a record set into fixed-size chunks and assigns each to an independent child Workflow. Direct to reason about; best for record sets up to ~4M items.</p>
 </a>
 </div>
 
@@ -57,7 +57,7 @@ Choose based on your throughput requirements, record set size, and whether you n
 
 ## Schedules
 
-Schedules allow Workflows to be executed on a recurring basis — think of them as a more powerful cron.
+Schedules allow Workflows to be executed on a recurring basis — think of them as a more flexible cron with start, pause, stop, update, and backfill controls.
 
 - Supports `start` / `pause` / `stop` / `update` / `backfill` of scheduled Workflow executions
 - Configurable **Overlap Policies** control what happens when the previous run is still running
@@ -80,13 +80,13 @@ temporal schedule create \
 
 ## Basic Workflow (single-tier fan-out)
 
-The simplest form of batch processing: the Workflow fetches or receives record IDs and executes one Activity per record.
+The most direct form of batch processing: the Workflow fetches or receives record IDs and executes one Activity per record.
 
 - Activities can be executed sequentially or concurrently (using the SDK's async primitives)
 - **Limit: 2,000 in-flight Activities per Workflow run** (aim for 500)
-- If total event count is likely to exceed 2,000 (hard limit: 50,000), use the [Batch Iterator](batch-iterator) instead
+- If total event count is likely to exceed 2,000 (hard limit: 51,200), use the [Batch Iterator](batch-iterator) instead
 
-**Pros:** Simple  
+**Pros:** Minimal code and orchestration overhead  
 **Cons:** Hard cap on concurrent Activities; all-or-nothing failure model; can overwhelm downstream systems
 
 ```mermaid
@@ -137,7 +137,7 @@ Full reference: [Temporal Cloud limits](https://docs.temporal.io/cloud/limits)
 | Limit | Value |
 |---|---|
 | Unfinished actions per Workflow | 2,000 max (aim for 500). Includes Activities, Signals, Child Workflows, cancellation requests |
-| Events per Workflow history | 50,000 events max (aim for 2,000) **or** 50 MB total history size |
+| Events per Workflow history | 51,200 events max (aim for a few thousand) **or** 50 MB total history size; warns at 10,240 events / 10 MB |
 | Signals per Workflow | 10,000 |
 | Updates per Workflow | 10 in-flight, 2,000 total |
 | Batch Signalling | 1 batch job per namespace; 50 Workflows/sec per batch |

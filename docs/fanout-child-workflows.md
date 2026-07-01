@@ -2,7 +2,7 @@
 # Fan-Out with Child Workflows
 
 :::info TLDR
-Split your record set into fixed-size chunks and start **one child Workflow per chunk** so that each chunk's history stays within Temporal's limits. Use this when you want maximum concurrency with no rate control and you can pre-compute how many chunks you need before the job starts. Keep the total number of children per parent under 1,000; use [Sliding Window](sliding-window) or [Batch Iterator](batch-iterator) for larger workloads.
+Split your record set into fixed-size chunks and start **one child Workflow per chunk** so that each chunk's history stays within Temporal's limits. Use this when you want maximum concurrency with no rate control and you can pre-compute how many chunks you need before the job starts. Keep the number of in-flight children per parent well under the default limit of 2,000; use [Sliding Window](sliding-window) or [Batch Iterator](batch-iterator) for larger workloads.
 :::
 
 ## Overview
@@ -295,7 +295,7 @@ public class RecordBatchWorkflowImpl implements RecordBatchWorkflow {
 
 ## Common Pitfalls
 
-- **Starting too many children at once.** Each child start adds to the parent's history. Keep total children per parent under 1,000 per [Temporal guidance](https://docs.temporal.io/workflows#when-to-use-child-workflows). If you need more children, switch to [MapReduce Tree](mapreduce-tree) or [Sliding Window](sliding-window).
+- **Starting too many children at once.** Each child start adds to the parent's history. Temporal enforces a default limit of 2,000 pending (in-flight) child Workflows per parent; keep well under it. See [Temporal guidance](https://docs.temporal.io/workflows#when-to-use-child-workflows). If you need more children, switch to [MapReduce Tree](mapreduce-tree) or [Sliding Window](sliding-window).
 - **Passing large lists of IDs.** Workflow inputs are stored in event history. Passing millions of record IDs as a list will blow the history size limit. Use offset + length instead.
 - **Ignoring child failures.** A failed child does not automatically fail the parent unless you await all results. Always await child handles and handle errors explicitly.
 

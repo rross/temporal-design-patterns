@@ -366,6 +366,11 @@ func ProcessWithErrorHandling(ctx workflow.Context, items []string) ([]Result, e
 ```java [Java]
 // ResilientParallelWorkflowImpl.java
 public class ResilientParallelWorkflowImpl implements ParallelWorkflow {
+  private final ProcessingActivity activity =
+    Workflow.newActivityStub(ProcessingActivity.class,
+        ActivityOptions.newBuilder()
+            .setStartToCloseTimeout(Duration.ofSeconds(30))
+            .build());
 
   @Override
   public ProcessingReport processWithErrorHandling(List<String> items) {

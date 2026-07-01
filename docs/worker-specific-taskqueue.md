@@ -75,7 +75,7 @@ processed = await workflow.execute_activity(
 )
 await workflow.execute_activity(
     upload,
-    UploadInput(processed, destination),
+    args=[processed, destination],
     task_queue=downloaded.host_task_queue,
     schedule_to_start_timeout=timedelta(seconds=10),
     start_to_close_timeout=timedelta(seconds=20),
@@ -141,7 +141,9 @@ await hostSpecificActivities.upload(processed, destination);
 :::
 
 The `taskQueue` option (or `setTaskQueue()` in Java) routes subsequent Activities to the specific Worker that downloaded the file.
-The `scheduleToStartTimeout` (or `setScheduleToStartTimeout()` in Java) is critical — if the specific Worker is unavailable, this timeout triggers retry logic rather than waiting indefinitely.
+The `scheduleToStartTimeout` (or `setScheduleToStartTimeout()` in Java) is critical — if the specific Worker is unavailable, the Activity Task cannot sit in the host-specific queue indefinitely.
+This timeout is non-retryable: when it expires, the Activity fails rather than retrying, because a retry would only place the Task back on the same queue.
+The Workflow catches that failure and retries the entire sequence so the work can restart on a different host.
 
 ## Implementation
 
@@ -413,7 +415,7 @@ class FileProcessingWorkflow:
 
         await workflow.execute_activity(
             upload,
-            UploadInput(processed, destination),
+            args=[processed, destination],
             task_queue=downloaded.host_task_queue,
             schedule_to_start_timeout=timedelta(seconds=10),
             start_to_close_timeout=timedelta(seconds=20),
@@ -680,8 +682,7 @@ You need to handle cleanup if the Workflow fails mid-process.
 | :--- | :--- | :--- | :--- |
 | Worker-Specific Queues | Guaranteed | Medium | Lower |
 | Shared Storage (S3) | None | Low | Higher |
-| Sticky Execution | Best effort | Low | Higher |
-| Session Framework | Guaranteed | High | Lower |
+| Session Framework (Go) | Guaranteed | Low | Lower |
 
 ## Best practices
 
@@ -704,7 +705,7 @@ You need to handle cleanup if the Workflow fails mid-process.
 
 ## Related patterns
 
-- **[Long-Running Activity](long-running-activity.md)**: For very short operations that benefit from colocation.
+- **[Long-Running Activity](long-running-activity.md)**: For tracking progress and handling cancellation when the colocated Activities run for minutes or hours.
 
 ## Sample code
 

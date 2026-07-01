@@ -82,7 +82,7 @@ class DataProcessorWorkflow:
 
         if len(batch) == BATCH_SIZE:
             # More data to process - continue as new with updated state
-            workflow.continue_as_new(cursor, total_processed)
+            workflow.continue_as_new(args=[cursor, total_processed])
         # Otherwise complete normally
 ```
 
@@ -223,7 +223,7 @@ class DataProcessorWorkflow:
 
             # Check if history is getting large
             if workflow.info().is_continue_as_new_suggested():
-                workflow.continue_as_new(cursor, total_processed)
+                workflow.continue_as_new(args=[cursor, total_processed])
 
         # Continue processing or complete
 ```
@@ -273,7 +273,7 @@ public class DataProcessorWorkflowImpl implements DataProcessorWorkflow {
       cursor = record.getId();
 
       // Check if history is getting large
-      if (Workflow.getInfo().shouldContinueAsNew()) {
+      if (Workflow.getInfo().isContinueAsNewSuggested()) {
         DataProcessorWorkflow continueAsNew =
             Workflow.newContinueAsNewStub(DataProcessorWorkflow.class);
         continueAsNew.processData(cursor, totalProcessed);
@@ -318,7 +318,7 @@ export async function dataProcessorWorkflow(
 :::
 
 Each SDK provides a method to check if the history is approaching the limit:
-- Java: `Workflow.getInfo().shouldContinueAsNew()`
+- Java: `Workflow.getInfo().isContinueAsNewSuggested()`
 - TypeScript: `workflowInfo().continueAsNewSuggested`
 - Python: `workflow.info().is_continue_as_new_suggested()`
 - Go: `workflow.GetInfo(ctx).GetContinueAsNewSuggested()`
@@ -356,7 +356,7 @@ You cannot undo Continue-As-New once triggered.
 
 ## Best practices
 
-- **Use the continue-as-new suggestion.** Check the SDK's built-in suggestion (`shouldContinueAsNew()` in Java, `continueAsNewSuggested` in TypeScript, `is_continue_as_new_suggested()` in Python, `GetContinueAsNewSuggested()` in Go) to automatically detect when history is large.
+- **Use the continue-as-new suggestion.** Check the SDK's built-in suggestion (`isContinueAsNewSuggested()` in Java, `continueAsNewSuggested` in TypeScript, `is_continue_as_new_suggested()` in Python, `GetContinueAsNewSuggested()` in Go) to automatically detect when history is large.
 - **Set aggressive iteration limits.** Continue as new every 100–1000 iterations to prevent history buildup and reduce storage costs. Balance frequency with the overhead of creating new executions.
 - **Pass minimal state.** Only pass necessary state to keep arguments small.
 - **Add exit Signals.** Allow graceful termination via Signals.

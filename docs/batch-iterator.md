@@ -120,7 +120,7 @@ class BatchIteratorWorkflow:
         )
 
         if len(page) == PAGE_SIZE:
-            continue_as_new(offset + PAGE_SIZE, total_processed)
+            continue_as_new(args=[offset + PAGE_SIZE, total_processed])
 
         return total_processed
 ```
@@ -130,6 +130,8 @@ class BatchIteratorWorkflow:
 package main
 
 import (
+	"time"
+
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -200,8 +202,8 @@ public class BatchIteratorWorkflowImpl implements BatchIteratorWorkflow {
         );
 
         if (page.size() == Shared.PAGE_SIZE) {
-            throw Workflow.newContinueAsNewStub(BatchIteratorWorkflow.class)
-                .run(offset + Shared.PAGE_SIZE, totalProcessed);
+            BatchIteratorWorkflow next = Workflow.newContinueAsNewStub(BatchIteratorWorkflow.class);
+            next.run(offset + Shared.PAGE_SIZE, totalProcessed);
         }
 
         return totalProcessed;

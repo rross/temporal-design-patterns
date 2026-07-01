@@ -483,7 +483,7 @@ public class SlidingWindowWorkflowImpl implements SlidingWindowWorkflow {
 ## Related Resources
 
 - [Continue-as-New pattern](continue-as-new) — history management fundamentals
-- [Batch Iterator](batch-iterator) — simpler alternative when sequential processing is acceptable
+- [Batch Iterator](batch-iterator) — sequential alternative when ordered, one-at-a-time processing is acceptable
 - [MapReduce Tree](mapreduce-tree) — fully parallel alternative when rate limiting is not needed
 - [Temporal limits reference](https://docs.temporal.io/cloud/limits)
 - [Sliding window sample (Java)](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/batch/slidingwindow)

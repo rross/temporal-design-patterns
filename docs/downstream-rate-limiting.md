@@ -49,8 +49,8 @@ flowchart LR
     WA -->|"schedule callApi\ntask_queue=rate-limited-tq"| TQ
     WB -->|"schedule callApi\ntask_queue=rate-limited-tq"| TQ
     WC -->|"schedule callApi\ntask_queue=rate-limited-tq"| TQ
-    TQ -->|"dispatch ≤2.5/sec"| WK1
-    TQ -->|"dispatch ≤2.5/sec"| WK2
+    TQ -->|"dispatch ≤5/sec across both"| WK1
+    TQ --> WK2
     WK1 -->|"≤5 req/sec combined"| DS
     WK2 --> DS
 ```
@@ -235,7 +235,7 @@ The concurrency slots (`MaxConcurrentActivityExecutionSize`, `MaxConcurrentWorkf
 ## Best practices
 
 - **Use a separate Task Queue for each rate limit.** `MaxTaskQueueActivitiesPerSecond` applies to every Activity on the queue. Mixing rate-limited and unrestricted Activities on the same queue will throttle the unrestricted ones too.
-- **Run at least two Worker processes per queue for availability.** A single Worker process is a single point of failure. With two Workers, keep the per-worker cap at half the target RPS so the combined rate stays at the intended limit.
+- **Run at least two Worker processes per queue for availability.** A single Worker process is a single point of failure. Because `MaxTaskQueueActivitiesPerSecond` is a server-side per-queue limit rather than a per-worker one, set the same value on every Worker that polls the queue. Set each Worker to the target RPS — for example, 5 on each of two Workers yields a combined queue limit of 5, not 10. If Workers report different values, the server applies the value from the last Worker that polled.
 - **Monitor queue depth and schedule latency.** Track the `temporal_activity_schedule_to_start_latency` metric on the rate-limited queue; sustained growth signals that demand consistently exceeds the configured cap. You can also query the Task Queue's `ApproximateBacklogCount` via the `DescribeTaskQueue` API — a steadily growing backlog count is a direct indicator that the configured RPS cap is too low for the current submission rate.
 
 ## Common pitfalls
@@ -244,6 +244,7 @@ The concurrency slots (`MaxConcurrentActivityExecutionSize`, `MaxConcurrentWorkf
 - **Setting conflicting MaxTaskQueueActivitiesPerSecond limits in workers.** This setting is set in Workers and sent to the Task Queue when a Worker polls. If you have multiple Workers with conflicting settings, the Workers will overwrite each other as they poll.
 - **Confusing throughput limits with concurrency limits.** `MaxTaskQueueActivitiesPerSecond` controls starts per second; `MaxConcurrentActivityExecutionSize` controls simultaneous executions. Long-running Activities that hold slots for minutes may exhaust concurrency before the RPS cap applies.
 - **Setting the cap far below actual demand.** A cap much lower than actual submission rate causes the queue to grow unboundedly. Monitor queue depth and raise the cap or add more Workers when throughput requirements grow.
+- **Expecting a perfectly even per-second rate.** The limit is enforced across the queue's partitions, default four. The server maintains the configured rate as an average over time but can dispatch a short burst above it, up to roughly the rate divided across partitions. If the downstream service rejects any momentary overshoot, set the cap below the hard limit to leave headroom, or reduce the partition count for the queue.
 
 ## Related patterns
 
