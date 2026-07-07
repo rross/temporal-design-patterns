@@ -283,7 +283,6 @@ If the business process has a maximum wait time, add a `ScheduleToCloseTimeout` 
 
 - [Retry Alerting via Metrics](retry-metrics.md): Emit a metric in the slow-phase Activity to surface sustained failures to on-call teams.
 - [Delayed Retry](delayed-retry.md): Override the retry interval per error type using `nextRetryDelay` on `ApplicationFailure`.
-- [Error Handling & Retry Patterns](error-handling-patterns.md): Overview and decision tree for all retry patterns.
 
 ## References
 

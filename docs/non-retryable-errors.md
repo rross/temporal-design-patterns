@@ -421,7 +421,6 @@ try {
 
 - [Fixed Count of Retries](fixed-count-retries.md): Limit retries for transient errors that are worth retrying a bounded number of times.
 - [Resumable Activity](resumable-activity.md): Park the Workflow and accept a corrected input via Signal when retries are exhausted.
-- [Error Handling & Retry Patterns](error-handling-patterns.md): Overview and decision tree for all retry patterns.
 
 ## References
 

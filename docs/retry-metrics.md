@@ -327,4 +327,3 @@ if (ctx.info.attempt > ALERT_THRESHOLD) {
 
 - [Fast/Slow Retries](fast-slow-retries.md): Combine by emitting this metric inside the slow-phase Activity to alert when patient waiting has gone on too long.
 - [Fixed Count of Retries](fixed-count-retries.md): Cap attempts at a fixed number instead of alerting at a threshold.
-- [Error Handling & Retry Patterns](error-handling-patterns.md): Overview and decision tree for all retry patterns.

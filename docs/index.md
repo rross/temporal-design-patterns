@@ -38,15 +38,6 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </a>
 </div>
 
-<div class="pattern-tile">
-<a href="distributed-transaction-patterns">
-<div class="pattern-tile-header">
-<img src="/images/saga-icon.png" alt="Distributed Transaction Patterns Overview">
-<span>Distributed Transaction Patterns Overview</span>
-</div>
-<p>Pattern selection guide for distributed transactions, with a decision tree for choosing between Saga, Early Return, and Idempotent Transactions.</p>
-</a>
-</div>
 </div>
 
 ## Entity & lifecycle patterns {.pattern-section-title}
@@ -82,15 +73,6 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </a>
 </div>
 
-<div class="pattern-tile">
-<a href="entity-lifecycle-patterns">
-<div class="pattern-tile-header">
-<img src="/images/entity-workflow-icon.png" alt="Entity & Lifecycle Patterns Overview">
-<span>Entity & Lifecycle Patterns Overview</span>
-</div>
-<p>Pattern selection guide for modeling long-lived stateful entities and managing Workflow history growth over time.</p>
-</a>
-</div>
 </div>
 
 ## Workflow messaging patterns {.pattern-section-title}
@@ -116,15 +98,6 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </a>
 </div>
 
-<div class="pattern-tile">
-<a href="workflow-messaging-patterns">
-<div class="pattern-tile-header">
-<img src="/images/signal-with-start-icon.png" alt="Workflow Messaging Patterns Overview">
-<span>Workflow Messaging Patterns Overview</span>
-</div>
-<p>Pattern selection guide for sending data into running Workflows and receiving responses or triggering behavior changes.</p>
-</a>
-</div>
 </div>
 
 ## Task orchestration patterns {.pattern-section-title}
@@ -160,15 +133,6 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </a>
 </div>
 
-<div class="pattern-tile">
-<a href="task-orchestration-patterns">
-<div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.png" alt="Task Orchestration Patterns Overview">
-<span>Task Orchestration Patterns Overview</span>
-</div>
-<p>Pattern selection guide for composing and coordinating multiple units of work within a Workflow.</p>
-</a>
-</div>
 </div>
 
 ## External interaction patterns {.pattern-section-title}
@@ -214,15 +178,6 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </a>
 </div>
 
-<div class="pattern-tile">
-<a href="external-interaction-patterns">
-<div class="pattern-tile-header">
-<img src="/images/polling-icon.png" alt="External Interaction Patterns Overview">
-<span>External Interaction Patterns Overview</span>
-</div>
-<p>Pattern selection guide for waiting on or interacting with systems and actors outside the Workflow.</p>
-</a>
-</div>
 </div>
 
 ## Worker configuration patterns {.pattern-section-title}
@@ -248,15 +203,6 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </a>
 </div>
 
-<div class="pattern-tile">
-<a href="worker-configuration-patterns">
-<div class="pattern-tile-header">
-<img src="/images/worker-specific-taskqueue-icon.png" alt="Worker Configuration Patterns Overview">
-<span>Worker Configuration Patterns Overview</span>
-</div>
-<p>Pattern selection guide for configuring how Workers are set up, how work is routed, and how Activities access external dependencies.</p>
-</a>
-</div>
 </div>
 
 ## Error handling & retry patterns {.pattern-section-title}
@@ -332,15 +278,6 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </a>
 </div>
 
-<div class="pattern-tile">
-<a href="error-handling-patterns">
-<div class="pattern-tile-header">
-<img src="/images/pick-first-icon.png" alt="Error Handling & Retry Patterns Overview">
-<span>Error Handling & Retry Patterns Overview</span>
-</div>
-<p>Pattern selection guide and decision tree for choosing the right retry strategy based on your error type, cost constraints, and recovery requirements.</p>
-</a>
-</div>
 </div>
 
 ## QoS & throughput patterns {.pattern-section-title}
@@ -376,15 +313,6 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </a>
 </div>
 
-<div class="pattern-tile">
-<a href="qos-throughput-patterns">
-<div class="pattern-tile-header">
-<img src="/images/downstream-rate-limiting-icon.svg" alt="QoS & Throughput Patterns Overview">
-<span>QoS & Throughput Patterns Overview</span>
-</div>
-<p>Pattern selection guide for controlling execution rate, protecting downstream services from overload, and ensuring fair capacity distribution across tenants.</p>
-</a>
-</div>
 </div>
 
 ## Batch processing patterns {.pattern-section-title}
