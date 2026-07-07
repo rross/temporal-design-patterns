@@ -7,7 +7,7 @@ Patterns for controlling how Temporal retries Activities, surfaces persistent fa
 <div class="pattern-tile">
 <a href="fixed-count-retries">
 <div class="pattern-tile-header">
-<img src="/images/pick-first-icon.png" alt="Fixed Count of Retries">
+<img src="/images/fixed-count-retries-icon.svg" alt="Fixed Count of Retries">
 <span>Fixed Count of Retries</span>
 </div>
 <p>Cap the number of Activity retry attempts to control cost when each attempt consumes a paid or limited resource.</p>
@@ -17,7 +17,7 @@ Patterns for controlling how Temporal retries Activities, surfaces persistent fa
 <div class="pattern-tile">
 <a href="fixed-wall-time-retries">
 <div class="pattern-tile-header">
-<img src="/images/delayed-start-icon.png" alt="Fixed Wall-Time Retries">
+<img src="/images/fixed-wall-time-retries-icon.svg" alt="Fixed Wall-Time Retries">
 <span>Fixed Wall-Time Retries</span>
 </div>
 <p>Bound the total elapsed time across all retry attempts to enforce a business SLA, regardless of how many individual attempts occur.</p>
@@ -27,7 +27,7 @@ Patterns for controlling how Temporal retries Activities, surfaces persistent fa
 <div class="pattern-tile">
 <a href="non-retryable-errors">
 <div class="pattern-tile-header">
-<img src="/images/saga-icon.png" alt="Non-Retryable Errors">
+<img src="/images/non-retryable-errors-icon.svg" alt="Non-Retryable Errors">
 <span>Non-Retryable Errors</span>
 </div>
 <p>Mark error types that will never succeed — such as validation failures or missing records — so Temporal fails fast instead of retrying indefinitely.</p>
@@ -37,7 +37,7 @@ Patterns for controlling how Temporal retries Activities, surfaces persistent fa
 <div class="pattern-tile">
 <a href="delayed-retry">
 <div class="pattern-tile-header">
-<img src="/images/delayed-start-icon.png" alt="Delayed Retry">
+<img src="/images/delayed-retry-icon.svg" alt="Delayed Retry">
 <span>Delayed Retry</span>
 </div>
 <p>Use a fixed retry interval when you know the downstream system will be unavailable for a predictable duration, such as a scheduled maintenance window.</p>
@@ -47,7 +47,7 @@ Patterns for controlling how Temporal retries Activities, surfaces persistent fa
 <div class="pattern-tile">
 <a href="fast-slow-retries">
 <div class="pattern-tile-header">
-<img src="/images/polling-icon.png" alt="Fast/Slow Retries">
+<img src="/images/fast-slow-retries-icon.svg" alt="Fast/Slow Retries">
 <span>Fast/Slow Retries</span>
 </div>
 <p>Try aggressively with a short interval first, then shift to a long interval when fast retries are exhausted, keeping the Workflow alive until the downstream system recovers.</p>
@@ -57,7 +57,7 @@ Patterns for controlling how Temporal retries Activities, surfaces persistent fa
 <div class="pattern-tile">
 <a href="retry-metrics">
 <div class="pattern-tile-header">
-<img src="/images/downstream-rate-limiting-icon.svg" alt="Retry Alerting via Metrics">
+<img src="/images/retry-metrics-icon.svg" alt="Retry Alerting via Metrics">
 <span>Retry Alerting via Metrics</span>
 </div>
 <p>Emit a custom metric from inside the Activity when the attempt count crosses a threshold, surfacing silent persistent failures to on-call teams before an SLA breach.</p>
@@ -67,7 +67,7 @@ Patterns for controlling how Temporal retries Activities, surfaces persistent fa
 <div class="pattern-tile">
 <a href="resumable-activity">
 <div class="pattern-tile-header">
-<img src="/images/approval-icon.png" alt="Resumable Activity">
+<img src="/images/resumable-activity-icon.svg" alt="Resumable Activity">
 <span>Resumable Activity</span>
 </div>
 <p>Park the Workflow after retries are exhausted and wait for a human to signal it's ok to proceed or a data correction, then resume execution from where it left off.</p>

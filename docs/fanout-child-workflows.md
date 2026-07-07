@@ -1,5 +1,5 @@
 
-# Fan-Out with Child Workflows
+<h1>Fan-Out with Child Workflows <img src="/images/fanout-child-workflows-icon.svg" alt="Fan-Out with Child Workflows" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Split your record set into fixed-size chunks and start **one child Workflow per chunk** so that each chunk's history stays within Temporal's limits. Use this when you want maximum concurrency with no rate control and you can pre-compute how many chunks you need before the job starts. Keep the number of in-flight children per parent well under the default limit of 2,000; use [Sliding Window](sliding-window) or [Batch Iterator](batch-iterator) for larger workloads.

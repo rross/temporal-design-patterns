@@ -1,5 +1,5 @@
 
-<h1>Idempotent Distributed Transactions <img src="/images/saga-icon.png" alt="Idempotent Distributed Transactions" class="pattern-page-icon"></h1>
+<h1>Idempotent Distributed Transactions <img src="/images/idempotent-distributed-transactions-icon.svg" alt="Idempotent Distributed Transactions" class="pattern-page-icon"></h1>
 
 ## Overview
 

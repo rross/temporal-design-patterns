@@ -1,5 +1,5 @@
 
-<h1>Fixed Wall-Time Retries <img src="/images/delayed-start-icon.png" alt="Fixed Wall-Time Retries" class="pattern-page-icon"></h1>
+<h1>Fixed Wall-Time Retries <img src="/images/fixed-wall-time-retries-icon.svg" alt="Fixed Wall-Time Retries" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Set `ScheduleToCloseTimeout` on the Activity call to enforce a hard time budget across all retry attempts. Use this when a business SLA requires the Activity to **succeed or fail within a defined window**, regardless of how many individual attempts occur.

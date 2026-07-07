@@ -1,5 +1,5 @@
 
-<h1>Retry Alerting via Metrics <img src="/images/downstream-rate-limiting-icon.svg" alt="Retry Alerting via Metrics" class="pattern-page-icon"></h1>
+<h1>Retry Alerting via Metrics <img src="/images/retry-metrics-icon.svg" alt="Retry Alerting via Metrics" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Emit a counter metric from inside the Activity when the attempt number exceeds a threshold, using the SDK's built-in metrics scope. **Use this to surface silent, persistent failures to on-call teams before they breach an SLA** — without changing retry behavior or adding Workflow-level tracking.

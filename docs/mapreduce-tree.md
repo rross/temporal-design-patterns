@@ -1,5 +1,5 @@
 
-# MapReduce Tree
+<h1>MapReduce Tree <img src="/images/mapreduce-tree-icon.svg" alt="MapReduce Tree" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Recursively split a record set into a tree of child Workflows — each node fans out to N sub-slices (two by default) — process every leaf in parallel, and signal results back up the tree to the root. Use this when you need **maximum throughput** for an embarrassingly parallel workload and downstream systems can absorb an unbounded burst of concurrent requests.

@@ -31,7 +31,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <div class="pattern-tile">
 <a href="idempotent-distributed-transactions">
 <div class="pattern-tile-header">
-<img src="/images/saga-icon.png" alt="Idempotent Distributed Transactions">
+<img src="/images/idempotent-distributed-transactions-icon.svg" alt="Idempotent Distributed Transactions">
 <span>Idempotent Distributed Transactions</span>
 </div>
 <p>Coordinates multi-step operations across external services with safe retries, automatic rollback on failure, and protection against duplicate submissions.</p>
@@ -265,7 +265,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <div class="pattern-tile">
 <a href="fixed-count-retries">
 <div class="pattern-tile-header">
-<img src="/images/pick-first-icon.png" alt="Fixed Count of Retries">
+<img src="/images/fixed-count-retries-icon.svg" alt="Fixed Count of Retries">
 <span>Fixed Count of Retries</span>
 </div>
 <p>Cap the number of Activity retry attempts to control cost when each attempt consumes a paid or limited resource.</p>
@@ -275,7 +275,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <div class="pattern-tile">
 <a href="fixed-wall-time-retries">
 <div class="pattern-tile-header">
-<img src="/images/delayed-start-icon.png" alt="Fixed Wall-Time Retries">
+<img src="/images/fixed-wall-time-retries-icon.svg" alt="Fixed Wall-Time Retries">
 <span>Fixed Wall-Time Retries</span>
 </div>
 <p>Bound the total elapsed time across all retry attempts to enforce a business SLA, regardless of how many individual attempts occur.</p>
@@ -285,7 +285,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <div class="pattern-tile">
 <a href="non-retryable-errors">
 <div class="pattern-tile-header">
-<img src="/images/saga-icon.png" alt="Non-Retryable Errors">
+<img src="/images/non-retryable-errors-icon.svg" alt="Non-Retryable Errors">
 <span>Non-Retryable Errors</span>
 </div>
 <p>Mark error types that will never succeed — such as validation failures or missing records — so Temporal fails fast instead of retrying indefinitely.</p>
@@ -295,7 +295,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <div class="pattern-tile">
 <a href="delayed-retry">
 <div class="pattern-tile-header">
-<img src="/images/delayed-start-icon.png" alt="Delayed Retry">
+<img src="/images/delayed-retry-icon.svg" alt="Delayed Retry">
 <span>Delayed Retry</span>
 </div>
 <p>Override the next retry interval for a specific failure using nextRetryDelay on ApplicationFailure. Use when an error carries information about how long to wait before retrying.</p>
@@ -305,7 +305,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <div class="pattern-tile">
 <a href="fast-slow-retries">
 <div class="pattern-tile-header">
-<img src="/images/polling-icon.png" alt="Fast/Slow Retries">
+<img src="/images/fast-slow-retries-icon.svg" alt="Fast/Slow Retries">
 <span>Fast/Slow Retries</span>
 </div>
 <p>Try aggressively with a short interval first, then shift to a long interval when fast retries are exhausted, keeping the Workflow alive until the downstream system recovers.</p>
@@ -315,7 +315,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <div class="pattern-tile">
 <a href="retry-metrics">
 <div class="pattern-tile-header">
-<img src="/images/downstream-rate-limiting-icon.svg" alt="Retry Alerting via Metrics">
+<img src="/images/retry-metrics-icon.svg" alt="Retry Alerting via Metrics">
 <span>Retry Alerting via Metrics</span>
 </div>
 <p>Emit a custom metric from inside the Activity when the attempt count crosses a threshold, surfacing silent persistent failures to on-call teams before an SLA breach.</p>
@@ -325,7 +325,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <div class="pattern-tile">
 <a href="resumable-activity">
 <div class="pattern-tile-header">
-<img src="/images/approval-icon.png" alt="Resumable Activity">
+<img src="/images/resumable-activity-icon.svg" alt="Resumable Activity">
 <span>Resumable Activity</span>
 </div>
 <p>Park the Workflow after retries are exhausted and wait for a human to signal a correction, then resume execution from where it left off.</p>
@@ -393,6 +393,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <div class="pattern-tile">
 <a href="fanout-child-workflows">
 <div class="pattern-tile-header">
+<img src="/images/fanout-child-workflows-icon.svg" alt="Fan-Out with Child Workflows">
 <span>Fan-Out with Child Workflows</span>
 </div>
 <p>Distributes a large record set across parallel Child Workflows for concurrent processing with automatic scaling.</p>
@@ -402,6 +403,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <div class="pattern-tile">
 <a href="batch-iterator">
 <div class="pattern-tile-header">
+<img src="/images/batch-iterator-icon.svg" alt="Batch Iterator">
 <span>Batch Iterator</span>
 </div>
 <p>Pages through unbounded datasets using Continue-As-New to prevent history overflow while maintaining exactly-once processing guarantees.</p>
@@ -411,6 +413,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <div class="pattern-tile">
 <a href="sliding-window">
 <div class="pattern-tile-header">
+<img src="/images/sliding-window-icon.svg" alt="Sliding Window">
 <span>Sliding Window</span>
 </div>
 <p>Maintains a fixed number of concurrently active Child Workflows, starting a new one each time an existing one completes.</p>
@@ -420,6 +423,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <div class="pattern-tile">
 <a href="mapreduce-tree">
 <div class="pattern-tile-header">
+<img src="/images/mapreduce-tree-icon.svg" alt="MapReduce Tree">
 <span>MapReduce Tree</span>
 </div>
 <p>Recursively splits a dataset into a binary tree of Child Workflows, processes leaves in parallel, then aggregates results back up the tree.</p>

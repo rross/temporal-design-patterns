@@ -1,5 +1,5 @@
 
-# Sliding Window
+<h1>Sliding Window <img src="/images/sliding-window-icon.svg" alt="Sliding Window" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Keep exactly `windowSize` child Workflows running at all times — each completion signal triggers the next record to start immediately. Use this when your record set is arbitrarily large, you need **bounded concurrency** to protect downstream systems, and you want higher throughput than a sequential Batch Iterator provides.

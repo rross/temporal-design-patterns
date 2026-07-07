@@ -19,6 +19,7 @@ Choose based on your throughput requirements, record set size, and whether you n
 <div class="pattern-tile">
 <a href="fanout-child-workflows">
 <div class="pattern-tile-header">
+<img src="/images/fanout-child-workflows-icon.svg" alt="Fan-Out with Child Workflows">
 <span>Fan-Out with Child Workflows</span>
 </div>
 <p>Splits a record set into fixed-size chunks and assigns each to an independent child Workflow. Direct to reason about; best for record sets up to ~4M items.</p>
@@ -28,6 +29,7 @@ Choose based on your throughput requirements, record set size, and whether you n
 <div class="pattern-tile">
 <a href="batch-iterator">
 <div class="pattern-tile-header">
+<img src="/images/batch-iterator-icon.svg" alt="Batch Iterator">
 <span>Batch Iterator</span>
 </div>
 <p>Processes one page of records per Workflow run and continues as new with the next page offset. Handles unlimited record sets while controlling downstream traffic.</p>
@@ -37,6 +39,7 @@ Choose based on your throughput requirements, record set size, and whether you n
 <div class="pattern-tile">
 <a href="sliding-window">
 <div class="pattern-tile-header">
+<img src="/images/sliding-window-icon.svg" alt="Sliding Window">
 <span>Sliding Window</span>
 </div>
 <p>Maintains a fixed-size window of concurrent child Workflows. As each child completes it signals the parent, which immediately starts a replacement — maximizing throughput within a concurrency budget.</p>
@@ -46,6 +49,7 @@ Choose based on your throughput requirements, record set size, and whether you n
 <div class="pattern-tile">
 <a href="mapreduce-tree">
 <div class="pattern-tile-header">
+<img src="/images/mapreduce-tree-icon.svg" alt="MapReduce Tree">
 <span>MapReduce Tree</span>
 </div>
 <p>Recursively splits a record set into chunks, fans out to leaf Workflows for parallel processing, and signals results back up the tree. Maximizes speed for embarrassingly parallel workloads.</p>

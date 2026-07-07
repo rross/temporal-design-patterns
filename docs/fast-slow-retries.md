@@ -1,5 +1,5 @@
 
-<h1>Fast/Slow Retries <img src="/images/polling-icon.png" alt="Fast/Slow Retries" class="pattern-page-icon"></h1>
+<h1>Fast/Slow Retries <img src="/images/fast-slow-retries-icon.svg" alt="Fast/Slow Retries" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Orchestrate two retry phases in the Workflow: a fast phase with short intervals and bounded attempts for transient errors, followed by a slow phase with long intervals and unlimited retries for extended outages. **Use this when a single `RetryPolicy` should not cover both brief blips and hour-long outages or maintenance windows.**

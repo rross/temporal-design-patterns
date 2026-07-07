@@ -1,5 +1,5 @@
 
-<h1>Resumable Activity (AKA Pause On Failure) <img src="/images/approval-icon.png" alt="Resumable Activity" class="pattern-page-icon"></h1>
+<h1>Resumable Activity (AKA Pause On Failure) <img src="/images/resumable-activity-icon.svg" alt="Resumable Activity" class="pattern-page-icon"></h1>
 
 :::info TLDR
 After retries are exhausted, **park the Workflow in a waiting state and block on a Signal that notifies the Workflow to proceed or optionally delivers corrected input from a human operator, then re-execute the Activity.** Use this when failures are caused by bad input that can be fixed externally — so the Workflow resumes exactly where it left off instead of being restarted from scratch.

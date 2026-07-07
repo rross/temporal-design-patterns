@@ -1,5 +1,5 @@
 
-<h1>Delayed Retry <img src="/images/delayed-start-icon.png" alt="Delayed Retry" class="pattern-page-icon"></h1>
+<h1>Delayed Retry <img src="/images/delayed-retry-icon.svg" alt="Delayed Retry" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Throw an `ApplicationFailure` with `nextRetryDelay` set inside the Activity to **delay the next retry for a fixed time.** Use this when an error carries its own timing information — such as an HTTP 429 `Retry-After` header or a known maintenance window — so Temporal waits exactly as long as needed instead of following the generic backoff schedule.

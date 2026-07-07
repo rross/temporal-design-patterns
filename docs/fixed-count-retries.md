@@ -1,5 +1,5 @@
 
-<h1>Fixed Count of Retries <img src="/images/pick-first-icon.png" alt="Fixed Count of Retries" class="pattern-page-icon"></h1>
+<h1>Fixed Count of Retries <img src="/images/fixed-count-retries-icon.svg" alt="Fixed Count of Retries" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Set `MaximumAttempts` on the `RetryPolicy` to **cap how many times Temporal will attempt an Activity**. Use this when each attempt consumes a paid API call, a rate-limited token, or any scarce resource where unbounded retries translate directly to unbounded cost.

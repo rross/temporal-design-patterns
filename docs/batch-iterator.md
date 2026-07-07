@@ -1,5 +1,5 @@
 
-# Batch Iterator
+<h1>Batch Iterator <img src="/images/batch-iterator-icon.svg" alt="Batch Iterator" class="pattern-page-icon"></h1>
 
 :::info TLDR
 **Process one page at a time** and call Continue-as-New with the next offset after each page so the Workflow's event history never grows without bound. With this method you can process infinite pages. Use this when your record set is arbitrarily large, you need a durable checkpoint after every page, and sequential page-by-page throughput is acceptable.

@@ -1,5 +1,5 @@
 
-<h1>Non-Retryable Errors <img src="/images/saga-icon.png" alt="Non-Retryable Errors" class="pattern-page-icon"></h1>
+<h1>Non-Retryable Errors <img src="/images/non-retryable-errors-icon.svg" alt="Non-Retryable Errors" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Raise a non-retryable `ApplicationError` from the Activity — or list error types in the `RetryPolicy` — so **the Temporal Activity fails fast instead of retrying indefinitely**. Use this for permanent failures such as invalid input, missing records, or authorization errors where repeating the same call will never succeed.
