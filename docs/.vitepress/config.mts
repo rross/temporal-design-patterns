@@ -5,6 +5,14 @@ export default withMermaid(defineConfig({
   title: 'Temporal Patterns',
   description: 'Common catalog of reusable patterns for Temporal workflows',
   base: process.env.VITEPRESS_BASE ?? '/temporal-design-patterns/',
+  head: [
+    // Google tag (gtag.js)
+    ['script', { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=G-KCHNTGYY7N' }],
+    ['script', {}, `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-KCHNTGYY7N');`]
+  ],
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
