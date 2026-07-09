@@ -1,5 +1,5 @@
 
-<h1>Resumable Activity (AKA Pause On Failure) <img src="/images/approval-icon.png" alt="Resumable Activity" class="pattern-page-icon"></h1>
+<h1>Resumable Activity (AKA Pause On Failure) <img src="/images/resumable-activity-icon.svg" alt="Resumable Activity" class="pattern-page-icon"></h1>
 
 :::info TLDR
 After retries are exhausted, **park the Workflow in a waiting state and block on a Signal that notifies the Workflow to proceed or optionally delivers corrected input from a human operator, then re-execute the Activity.** Use this when failures are caused by bad input that can be fixed externally — so the Workflow resumes exactly where it left off instead of being restarted from scratch.
@@ -516,7 +516,7 @@ stateDiagram-v2
 - **Use a bounded `MaximumAttempts` before parking.** Allow a few automatic retries to recover from transient failures. Parking immediately on the first failure forces operators to intervene for problems that would have resolved on their own.
 - **Manage history growth in long-running correction loops.** Each correction cycle — park, receive signal, re-execute Activity — adds events to the Workflow history (signal received, state transitions, Activity scheduled/completed). For workflows that may receive many corrections over time, use [Continue-As-New](continue-as-new.md) to carry the current state into a fresh execution before the history grows too large, rather than relying solely on an arbitrary correction counter.
 - **Expose status via a Query method.** The `getStatus` Query gives operations tooling visibility into where the Workflow is parked without requiring access to the Workflow history.
-- **Validate the correction in the Signal handler.** Check that the corrected account is non-empty and matches the expected format before setting the state. An invalid correction just parks the Workflow again, but a clear error message helps operators.
+- **Validate the correction in the Signal handler.** Check that the corrected account is non-empty and matches the expected format before setting the state. An invalid correction parks the Workflow again, but a clear error message helps operators.
 - **Log and record state at every transition.** The `AWAITING_CORRECTION` and `AWAITING_APPROVAL` states can last hours or days. Structured log lines at each transition make the audit trail clear. For operational visibility, also update a [Search Attribute](https://docs.temporal.io/visibility) at each transition (for example, a `Keyword` attribute storing the current status) so operators can filter and query workflows by state directly from the Temporal UI or CLI.
 - **Notify the operator proactively.** The `AWAITING_CORRECTION` transition is a good point to send an alert — an email, a Slack message, or a ticket — rather than waiting for the operator to notice in the Temporal UI.
 - **Distinguish this from the Approval pattern.** The [Approval](approval.md) pattern gates forward progress on a human decision. This pattern recovers from failure with a human-supplied data correction. Both use Signals and `wait_condition`, but serve different roles in a process.
@@ -534,4 +534,3 @@ stateDiagram-v2
 - [Non-Retryable Errors](non-retryable-errors.md): Fail immediately without parking when the error is structural and no correction is expected.
 - [Fast/Slow Retries](fast-slow-retries.md): Infinite patient retries when the downstream system is temporarily unavailable.
 - [Signal with Start](signal-with-start.md): Start the Workflow and send the correction Signal atomically.
-- [Error Handling & Retry Patterns](error-handling-patterns.md): Overview and decision tree for all retry patterns.

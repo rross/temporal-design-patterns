@@ -1,5 +1,5 @@
 
-<h1>Event Accumulator Pattern <img src="/images/event-accumulator-icon.png" alt="Event Accumulator Pattern" class="pattern-page-icon"></h1>
+<h1>Event Accumulator Pattern <img src="/images/event-accumulator-icon.svg" alt="Event Accumulator Pattern" class="pattern-page-icon"></h1>
 
 :::info TL;DR
 Use the Event Accumulator pattern to **durably collect and process events from multiple senders over an unlimited time.** The workflow accumulates signals, deduplicates by a stable item key, and processes the batch after a sliding inactivity timeout — no external coordination, no lost events on retry.

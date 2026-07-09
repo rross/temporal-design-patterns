@@ -1,5 +1,5 @@
 
-<h1>Parallel Execution <img src="/images/parallel-execution-icon.png" alt="Parallel Execution" class="pattern-page-icon"></h1>
+<h1>Parallel Execution <img src="/images/parallel-execution-icon.svg" alt="Parallel Execution" class="pattern-page-icon"></h1>
 
 ## Overview
 
@@ -366,6 +366,11 @@ func ProcessWithErrorHandling(ctx workflow.Context, items []string) ([]Result, e
 ```java [Java]
 // ResilientParallelWorkflowImpl.java
 public class ResilientParallelWorkflowImpl implements ParallelWorkflow {
+  private final ProcessingActivity activity =
+    Workflow.newActivityStub(ProcessingActivity.class,
+        ActivityOptions.newBuilder()
+            .setStartToCloseTimeout(Duration.ofSeconds(30))
+            .build());
 
   @Override
   public ProcessingReport processWithErrorHandling(List<String> items) {

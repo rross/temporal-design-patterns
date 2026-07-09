@@ -1,5 +1,5 @@
 
-<h1>Long-Running Activity - Tracking Progress and Handling Cancellation with Heartbeats <img src="/images/long-running-activity-icon.png" alt="Long-Running Activity - Tracking Progress and Handling Cancellation with Heartbeats" class="pattern-page-icon"></h1>
+<h1>Long-Running Activity - Tracking Progress and Handling Cancellation with Heartbeats <img src="/images/long-running-activity-icon.svg" alt="Long-Running Activity - Tracking Progress and Handling Cancellation with Heartbeats" class="pattern-page-icon"></h1>
 
 ## Overview
 
@@ -272,7 +272,7 @@ public class FileProcessingActivityImpl implements FileProcessingActivity {
         processLine(line);
         currentLine++;
       }
-    } catch (CanceledFailure e) {
+    } catch (ActivityCompletionException e) {
       cleanupResources();
       throw e;
     }
@@ -317,7 +317,7 @@ export async function processLargeFile(filePath: string): Promise<void> {
 :::
 
 Cancellation is delivered to the Activity when it heartbeats.
-In Java, the next `heartbeat()` call throws a `CanceledFailure`.
+In Java, the next `heartbeat()` call throws an `ActivityCompletionException` (an `ActivityCanceledException` for cancellation).
 In TypeScript, cancellation is delivered as a `CancelledFailure` via `sleep()` or `Context.current().cancelled`.
 In Python, cancellation is delivered as an `asyncio.CancelledError`.
 In Go, the context is cancelled and `ctx.Done()` becomes readable.
@@ -539,7 +539,7 @@ Heartbeat details have size limits, so you should avoid large objects.
 - **Keep details small.** Store minimal state (IDs, offsets, counts), not full objects.
 - **Handle idempotency.** Ensure reprocessing the last checkpoint is safe.
 - **Check cancellation.** Heartbeat regularly to detect cancellation quickly.
-- **Clean up on cancel.** Handle cancellation errors appropriately: catch `CanceledFailure` (Java), `CancelledFailure` (TypeScript), `asyncio.CancelledError` (Python), or check `ctx.Done()` (Go).
+- **Clean up on cancel.** Handle cancellation errors appropriately: catch `ActivityCompletionException` (Java), `CancelledFailure` (TypeScript), `asyncio.CancelledError` (Python), or check `ctx.Done()` (Go).
 - **Log progress.** Log heartbeat details for debugging and monitoring.
 - **Test resumption.** Verify Activities resume correctly after simulated failures.
 - **Avoid heartbeat spam.** Do not heartbeat on every iteration of tight loops.
@@ -549,7 +549,7 @@ Heartbeat details have size limits, so you should avoid large objects.
 - **Missing HeartbeatTimeout.** Without a HeartbeatTimeout, Temporal cannot detect a stuck or crashed Worker until the StartToCloseTimeout expires. Always set HeartbeatTimeout shorter than StartToCloseTimeout.
 - **Heartbeating too infrequently.** Cancellation is only delivered on the next heartbeat. If the Activity heartbeats every 5 minutes, cancellation takes up to 5 minutes to propagate.
 - **Not resuming from heartbeat progress on retry.** When an Activity retries, retrieve the last heartbeat details -- `context.getHeartbeatDetails()` (Java), `activityInfo().heartbeatDetails` (TypeScript), `activity.info().heartbeat_details` (Python), or `activity.GetHeartbeatDetails()` (Go) -- and resume from the last checkpoint instead of restarting from scratch.
-- **Catching the wrong exception for cancellation.** Cancellation is SDK-specific: `CanceledFailure` (Java), `CancelledFailure` (TypeScript), `asyncio.CancelledError` (Python), or `ctx.Err()` returning `context.Canceled` (Go).
+- **Catching the wrong exception for cancellation.** Cancellation is SDK-specific. Inside the Activity, the `heartbeat()` call throws an `ActivityCompletionException` (Java), cancellation surfaces as a `CancelledFailure` (TypeScript) or an `asyncio.CancelledError` (Python), and the context reports `ctx.Err()` returning `context.Canceled` (Go). The `CanceledFailure` type is what the Workflow observes as the cause of the resulting `ActivityFailure`, not what the Activity body catches.
 
 ## Related patterns
 

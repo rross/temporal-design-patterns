@@ -1,5 +1,5 @@
 
-<h1>Delayed Retry <img src="/images/delayed-start-icon.png" alt="Delayed Retry" class="pattern-page-icon"></h1>
+<h1>Delayed Retry <img src="/images/delayed-retry-icon.svg" alt="Delayed Retry" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Throw an `ApplicationFailure` with `nextRetryDelay` set inside the Activity to **delay the next retry for a fixed time.** Use this when an error carries its own timing information — such as an HTTP 429 `Retry-After` header or a known maintenance window — so Temporal waits exactly as long as needed instead of following the generic backoff schedule.
@@ -234,7 +234,6 @@ export async function apiWorkflow(endpoint: string): Promise<string> {
 - [Fixed Count of Retries](fixed-count-retries.md): Cap total attempts to prevent unbounded retry cost.
 - [Fixed Wall-Time Retries](fixed-wall-time-retries.md): Enforce a total elapsed time budget across all attempts.
 - [Fast/Slow Retries](fast-slow-retries.md): Shift from a fast retry cadence to a slow one after initial attempts are exhausted.
-- [Error Handling & Retry Patterns](error-handling-patterns.md): Overview and decision tree for all retry patterns.
 
 ## References
 

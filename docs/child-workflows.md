@@ -1,5 +1,5 @@
 
-<h1>Child Workflows Pattern <img src="/images/child-workflows-icon.png" alt="Child Workflows Pattern" class="pattern-page-icon"></h1>
+<h1>Child Workflows Pattern <img src="/images/child-workflows-icon.svg" alt="Child Workflows Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 
@@ -628,7 +628,7 @@ Starting a Child Workflow has more overhead than starting an Activity.
 - **Ignoring the Parent Close Policy.** The default policy is TERMINATE, which kills children when the parent closes. If children must outlive the parent, set the policy to ABANDON explicitly.
 - **Using synchronous calls when async is needed.** Calling a Child Workflow synchronously blocks the parent until the child completes. For long-running children, use the async API (`Async.function()` in Java, `startChild()` in TypeScript, `start_child_workflow()` in Python, or collect Futures without calling `.Get()` in Go) to avoid stalling the parent.
 - **Omitting Workflow IDs.** Without explicit Workflow IDs, you lose the ability to deduplicate or look up Child Workflows by a meaningful identifier. Generate deterministic IDs based on business keys.
-- **Not handling child failures.** Child Workflow failures propagate as `ChildWorkflowFailure` exceptions. If you do not catch and handle them, the parent Workflow fails as well.
+- **Not handling child failures.** Child Workflow failures propagate to the parent as a Child Workflow Failure (`ChildWorkflowFailure` in TypeScript and Java, `ChildWorkflowError` in Python, `ChildWorkflowExecutionError` in Go), with the underlying cause in its `cause` field. If you do not catch and handle them, the parent Workflow fails as well.
 
 ## Related patterns
 

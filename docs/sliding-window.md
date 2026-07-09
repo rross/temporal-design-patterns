@@ -1,5 +1,5 @@
 
-# Sliding Window
+<h1>Sliding Window <img src="/images/sliding-window-icon.svg" alt="Sliding Window" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Keep exactly `windowSize` child Workflows running at all times — each completion signal triggers the next record to start immediately. Use this when your record set is arbitrarily large, you need **bounded concurrency** to protect downstream systems, and you want higher throughput than a sequential Batch Iterator provides.
@@ -483,7 +483,7 @@ public class SlidingWindowWorkflowImpl implements SlidingWindowWorkflow {
 ## Related Resources
 
 - [Continue-as-New pattern](continue-as-new) — history management fundamentals
-- [Batch Iterator](batch-iterator) — simpler alternative when sequential processing is acceptable
+- [Batch Iterator](batch-iterator) — sequential alternative when ordered, one-at-a-time processing is acceptable
 - [MapReduce Tree](mapreduce-tree) — fully parallel alternative when rate limiting is not needed
 - [Temporal limits reference](https://docs.temporal.io/cloud/limits)
 - [Sliding window sample (Java)](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/batch/slidingwindow)

@@ -1,5 +1,5 @@
 
-<h1>Fixed Wall-Time Retries <img src="/images/delayed-start-icon.png" alt="Fixed Wall-Time Retries" class="pattern-page-icon"></h1>
+<h1>Fixed Wall-Time Retries <img src="/images/fixed-wall-time-retries-icon.svg" alt="Fixed Wall-Time Retries" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Set `ScheduleToCloseTimeout` on the Activity call to enforce a hard time budget across all retry attempts. Use this when a business SLA requires the Activity to **succeed or fail within a defined window**, regardless of how many individual attempts occur.
@@ -23,8 +23,9 @@ When a business SLA exists and violating that SLA is a failure such as a payment
 
 Set `ScheduleToCloseTimeout` on the Activity call options.
 It starts when the Activity is first scheduled and expires when the clock runs out, regardless of how many attempts have occurred.
-If the timeout expires during an attempt, that attempt is cancelled.
-If it expires between retries, the pending retry is abandoned and Temporal delivers an `ActivityError` to the Workflow.
+When the timeout expires, the Temporal Service marks the Activity Execution as timed out and delivers an `ActivityError` to the Workflow.
+No further retries are scheduled.
+A timeout does not forcibly stop Activity code that is already running, so an Activity that runs past the budget must heartbeat and handle cancellation to stop cooperatively.
 
 ```mermaid
 sequenceDiagram
@@ -274,7 +275,7 @@ const { authorizeTransaction } = wf.proxyActivities<typeof activities>({
 
 - **Not accounting for `ScheduleToStart` delay in the budget.** `ScheduleToCloseTimeout` begins when the Activity is first scheduled, which includes the time the task waits in the queue before a Worker picks it up. Under high load or insufficient Worker capacity, tasks can sit in the queue for seconds or minutes before the first attempt starts — consuming SLA budget before any work is done. Provision Workers with enough capacity for peak traffic, or use autoscaling, to keep `ScheduleToStart` latency negligible relative to the SLA window.
 - **Using `StartToCloseTimeout` alone for SLA enforcement.** A downstream system that responds slowly but never fully times out can keep resetting the per-attempt clock indefinitely.
-- **Setting `ScheduleToCloseTimeout` shorter than `StartToCloseTimeout`.** If the total budget is shorter than a single attempt's maximum, the Activity will never complete — Temporal will cancel it before it finishes.
+- **Setting `ScheduleToCloseTimeout` shorter than `StartToCloseTimeout`.** If the total budget is shorter than a single attempt's maximum, the first attempt cannot finish within the budget — the Temporal Service times out the Activity Execution and returns an error before any attempt can succeed.
 - **Ignoring the breach in the Workflow.** Letting the `ActivityError` propagate without handling it means SLA breaches go unlogged and uncompensated.
 - **Not accounting for backoff delays in the budget.** The total time includes both attempt durations and the backoff delays between them. A 1-hour budget with a 30-minute initial interval and coefficient 2.0 leaves room for only one or two attempts.
 
@@ -282,7 +283,6 @@ const { authorizeTransaction } = wf.proxyActivities<typeof activities>({
 
 - [Fixed Count of Retries](fixed-count-retries.md): Bound by attempt count rather than elapsed time.
 - [Delayed Retry](delayed-retry.md): Fixed-interval retry when the downstream unavailability window is known.
-- [Error Handling & Retry Patterns](error-handling-patterns.md): Overview and decision tree for all retry patterns.
 
 ## References
 

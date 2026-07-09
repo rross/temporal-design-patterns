@@ -1,5 +1,5 @@
 
-<h1>Pick First Pattern <img src="/images/pick-first-icon.png" alt="Pick First Pattern" class="pattern-page-icon"></h1>
+<h1>Pick First Pattern <img src="/images/pick-first-icon.svg" alt="Pick First Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 
@@ -497,7 +497,7 @@ Only the first result is used; others are discarded.
 
 - **Missing heartbeats in Activities.** Activities must heartbeat to detect cancellation. Without heartbeats, cancelled Activities continue running until their StartToCloseTimeout expires, wasting resources.
 - **Not waiting for cancellation cleanup.** Without configuring the cancellation type to wait for completion (e.g., `WaitForCancellation: true` in Go, `WAIT_CANCELLATION_COMPLETED` in other SDKs), fetching a cancelled Activity's result returns a cancellation error immediately, before the Activity has finished cleanup. Configure this setting if you need to wait for cleanup to complete.
-- **Ignoring errors from the winning Activity.** The first Activity to complete might return an error. Always check the result for errors, not just assume success.
+- **Ignoring errors from the winning Activity.** The first Activity to complete might return an error. Always check the result for errors rather than assuming success.
 - **Forgetting to cancel remaining Activities.** If you forget to cancel the shared context or scope after receiving the first result, the remaining Activities continue running indefinitely.
 
 ## Related patterns

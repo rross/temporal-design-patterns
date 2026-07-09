@@ -1,5 +1,5 @@
 
-<h1>Approval Pattern <img src="/images/approval-icon.png" alt="Approval Pattern" class="pattern-page-icon"></h1>
+<h1>Approval Pattern <img src="/images/approval-icon.svg" alt="Approval Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 
@@ -919,7 +919,7 @@ If the approver's interface needs immediate confirmation that the approval was a
 
 **TypeScript**
 - [Signals and Queries](https://github.com/temporalio/samples-typescript/tree/main/signals-queries) — Signal and Query usage in a Workflow.
-- [Message Passing](https://github.com/temporalio/samples-typescript/tree/main/message-passing-intro) — Introduction to message passing with Signals, Queries, and Updates.
+- [Message Passing](https://github.com/temporalio/samples-typescript/tree/main/message-passing) — Introduction to message passing with Signals, Queries, and Updates.
 
 **Python**
 - [Hello Signal](https://github.com/temporalio/samples-python/tree/main/hello/hello_signal.py) — Basic Signal handling in a Workflow.

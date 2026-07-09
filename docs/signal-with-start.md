@@ -1,5 +1,5 @@
 
-<h1>Signal with Start Pattern <img src="/images/signal-with-start-icon.png" alt="Signal with Start Pattern" class="pattern-page-icon"></h1>
+<h1>Signal with Start Pattern <img src="/images/signal-with-start-icon.svg" alt="Signal with Start Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 

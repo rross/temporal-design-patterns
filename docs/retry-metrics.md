@@ -1,5 +1,5 @@
 
-<h1>Retry Alerting via Metrics <img src="/images/downstream-rate-limiting-icon.svg" alt="Retry Alerting via Metrics" class="pattern-page-icon"></h1>
+<h1>Retry Alerting via Metrics <img src="/images/retry-metrics-icon.svg" alt="Retry Alerting via Metrics" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Emit a counter metric from inside the Activity when the attempt number exceeds a threshold, using the SDK's built-in metrics scope. **Use this to surface silent, persistent failures to on-call teams before they breach an SLA** — without changing retry behavior or adding Workflow-level tracking.
@@ -311,7 +311,7 @@ if (ctx.info.attempt > ALERT_THRESHOLD) {
 ## Best practices
 
 - **Choose a threshold above normal transient noise.** If your downstream system occasionally has 1–2 retry attempts under normal conditions, set the threshold at 5 or 10 so the metric only fires for genuinely sustained failures.
-- **Emit on every attempt above the threshold, not just once.** Incrementing the counter on each high-attempt invocation allows alerting systems to detect both the onset and the duration of a problem by watching the counter rate.
+- **Emit on every attempt above the threshold, not only once.** Incrementing the counter on each high-attempt invocation allows alerting systems to detect both the onset and the duration of a problem by watching the counter rate.
 - **Use the SDK metrics scope, not a third-party library.** The SDK scope integrates with your Worker's existing metrics pipeline and adds default labels such as namespace and task queue automatically.
 - **Set up rate-based alerts, not count-based.** A count alert requires resetting or remembering the baseline. A rate alert (e.g., "more than 3 increments per minute") fires when the problem is active and clears when it resolves.
 - **Combine with Fast/Slow Retries.** Emit the metric in the slow-phase Activity of a [Fast/Slow Retries](fast-slow-retries.md) pattern to alert when the Workflow has been in the slow phase long enough to be a concern.
@@ -327,4 +327,3 @@ if (ctx.info.attempt > ALERT_THRESHOLD) {
 
 - [Fast/Slow Retries](fast-slow-retries.md): Combine by emitting this metric inside the slow-phase Activity to alert when patient waiting has gone on too long.
 - [Fixed Count of Retries](fixed-count-retries.md): Cap attempts at a fixed number instead of alerting at a threshold.
-- [Error Handling & Retry Patterns](error-handling-patterns.md): Overview and decision tree for all retry patterns.

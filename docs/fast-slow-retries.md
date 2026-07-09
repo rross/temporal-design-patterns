@@ -1,5 +1,5 @@
 
-<h1>Fast/Slow Retries <img src="/images/polling-icon.png" alt="Fast/Slow Retries" class="pattern-page-icon"></h1>
+<h1>Fast/Slow Retries <img src="/images/fast-slow-retries-icon.svg" alt="Fast/Slow Retries" class="pattern-page-icon"></h1>
 
 :::info TLDR
 Orchestrate two retry phases in the Workflow: a fast phase with short intervals and bounded attempts for transient errors, followed by a slow phase with long intervals and unlimited retries for extended outages. **Use this when a single `RetryPolicy` should not cover both brief blips and hour-long outages or maintenance windows.**
@@ -270,7 +270,7 @@ If the business process has a maximum wait time, add a `ScheduleToCloseTimeout` 
 ## Best practices
 
 - **Log the phase transition.** The transition from fast to slow is a meaningful signal that the downstream system may have a sustained problem. Log it with enough context — request identifier, attempt count, timestamp — to aid diagnosis.
-- **Leave `MaximumAttempts` unset in Phase 2.** Omitting `MaximumAttempts` (or setting it to 0) gives the slow phase unlimited retries. The Temporal Service manages the wait between attempts via `InitialInterval`; the Workflow simply blocks until the Activity eventually succeeds.
+- **Leave `MaximumAttempts` unset in Phase 2.** Omitting `MaximumAttempts` (or setting it to 0) gives the slow phase unlimited retries. The Temporal Service manages the wait between attempts via `InitialInterval`; the Workflow blocks until the Activity eventually succeeds.
 - **Combine with Retry Alerting via Metrics.** Add a metric counter inside the Activity to surface slow-phase attempts to on-call teams. See [Retry Alerting via Metrics](retry-metrics.md).
 
 ## Common pitfalls
@@ -283,7 +283,6 @@ If the business process has a maximum wait time, add a `ScheduleToCloseTimeout` 
 
 - [Retry Alerting via Metrics](retry-metrics.md): Emit a metric in the slow-phase Activity to surface sustained failures to on-call teams.
 - [Delayed Retry](delayed-retry.md): Override the retry interval per error type using `nextRetryDelay` on `ApplicationFailure`.
-- [Error Handling & Retry Patterns](error-handling-patterns.md): Overview and decision tree for all retry patterns.
 
 ## References
 

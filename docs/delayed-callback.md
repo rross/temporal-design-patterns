@@ -1,16 +1,16 @@
-# Delayed Callback (Webhooks)
+<h1>Delayed Callback (Webhooks) <img src="/images/webhooks-icon.svg" alt="Delayed Callback (Webhooks)" class="pattern-page-icon"></h1>
 
 ## Overview
-Delayed Callback patterns in Temporal are exactly what they sound like: manage delayed completion notification between two systems. They leverage durable timers to make this extremely simple and defined only in code.
+Delayed Callback patterns in Temporal manage delayed completion notification between two systems. They use durable timers, and you define the behavior entirely in code.
 
 ### Webhooks
-[Webhooks](https://www.redhat.com/en/topics/automation/what-is-a-webhook) are easy to build and configure with the Delayed Callback patterns. There are two recommended patterns  for integrating Temporal Workflows to communicate through HTTP callbacks: 
+You build and configure [Webhooks](https://www.redhat.com/en/topics/automation/what-is-a-webhook) with the Delayed Callback patterns. There are two recommended patterns for integrating Temporal Workflows to communicate through HTTP callbacks: 
 - waiting and receiving inbound webhooks
 - firing delayed outbound callbacks
 
 Included is a pattern for completing activities asynchronously via a callback token and some guidance on when to use it.
 
-Temporal lets you build durable, observable webhook-based integrations without ad-hoc queues, cron jobs, or fragile state machines.
+Temporal lets you build durable, observable webhook-based integrations without ad hoc queues, cron jobs, or fragile state machines.
 
 
 ## Problem
@@ -19,21 +19,21 @@ Waiting for another system without Durable Execution is hard. You must implement
 - durable timers (e.g. with a cron per timer)
 - retry queues
 - state stores
-- reconciliation jobs 
+- reconciliation jobs
 
-All just for a simple elayed callback.
+All to support a delayed callback.
 
 Webhook-based integrations have several failure modes that are difficult to handle without durable infrastructure:
 
 - An inbound message fires before the target system is ready or at the proper state, causing the message to be ignored or lost.
 - An outbound HTTP callback fails midway through a multi-step cross-system process, and there is no record of what was sent, retried, or skipped.
-- An external job (payment processor, ML pipeline, etc.) completes and calls back, but the in-process state that was waiting for the callback has been lost to a poor state management or application restart.
+- An external job (payment processor, ML pipeline, etc.) completes and calls back, but the in-process state that was waiting for the callback has been lost to poor state management or an application restart.
 - A delayed callback is scheduled via a cron job or message queue, but the scheduling system and the application process have no shared recovery mechanism.
 
 
 ## Solution
 
-Temporal makes solving these problems simple with the use of [durable timers](https://docs.temporal.io/workflow-execution/timers-delays) in a workflow. [Signals or Updates](https://docs.temporal.io/encyclopedia/workflow-message-passing/) are used to send events to a Workflow. All of these are just Temporal code - no extra infrastructure to deploy or manage.
+Temporal solves these problems with [durable timers](https://docs.temporal.io/workflow-execution/timers-delays) in a Workflow. You use [Signals or Updates](https://docs.temporal.io/encyclopedia/workflow-message-passing/) to send events to a Workflow. All of these are Temporal code — no extra infrastructure to deploy or manage.
 
 - **Pattern 1 — Inbound Callback:** Route the incoming HTTP request to a Temporal Signal-with-Start. The Workflow is the durable recipient; if it is not running yet, Temporal creates it and delivers the Signal atomically.
 - **Pattern 2 — Delayed Outbound Callbacks:** Use a durable `workflow.sleep()` to set the proper delay before executing the outbound HTTP activity. The sleep timer survives worker and server restarts; the activity retries automatically on failure.
@@ -114,7 +114,7 @@ The following describes each step in the diagram:
 2. The activity records its task token (an opaque handle Temporal provides) alongside the submitted job ID — for example, in a database row.
 3. The activity returns without waiting; the Workflow is now paused waiting for the activity to complete externally.
 4. When the external system finishes, it calls your callback endpoint with the result.
-5. Your callback handler retrieves the task token from the database and calls `complete_async_activity` on the Temporal client. The Workflow resumes immediately with the result.
+5. Your callback handler retrieves the task token from the database and completes the activity through the Temporal client using that token. The Workflow resumes immediately with the result.
 
 ## Implementation
 
@@ -555,15 +555,17 @@ async def submit_job(input: JobInput) -> str:
     )
     activity.logger.info(f"Job {job_id} submitted; waiting for async callback")
 
-    # Raise ApplicationError to tell Temporal not to mark the activity complete yet
-    raise activity.CompleteAsyncError()
+    # Tell Temporal not to mark the activity complete on return; the external
+    # callback will complete it later using the task token.
+    activity.raise_complete_async()
 
 
 # In your webhook callback handler (e.g., FastAPI route):
-async def handle_callback(job_id: str, result: str, task_token_hex: str) -> None:
+async def handle_callback(result: str, task_token_hex: str) -> None:
     token = bytes.fromhex(task_token_hex)
     client = await Client.connect("localhost:7233")
-    await client.complete_async_activity_with_id(job_id, result)
+    handle = client.get_async_activity_handle(task_token=token)
+    await handle.complete(result)
     # Workflow resumes with `result` immediately
 ```
 
@@ -620,7 +622,6 @@ import (
 
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 )
 
 // SubmitJob submits a job and returns immediately; the activity completes
@@ -639,7 +640,7 @@ func SubmitJob(ctx context.Context, input JobInput) (string, error) {
 	fmt.Printf("Job %s submitted; waiting for async callback\n", jobID)
 
 	// Return ErrResultPending to tell Temporal not to mark the activity complete yet
-	return "", temporal.NewApplicationError("async", "AsyncCompletion")
+	return "", activity.ErrResultPending
 }
 
 // CompleteJob is called by your webhook callback handler to unblock the workflow.
@@ -664,7 +665,7 @@ func CompleteJob(ctx context.Context, c client.Client, jobID string, result stri
 | Submit a job to an external system; wait for its completion webhook | Async activity completion (Pattern 3) |
 | Poll an external system that does not support webhooks | [Polling External Services](/polling) pattern |
 
-**Do not use** Pattern 2 for delays shorter than one second as you should not rely on (sub-second accuracy for timers)[https://docs.temporal.io/workflow-execution/timers-delays]. 
+**Do not use** Pattern 2 for delays shorter than one second. Timer durations range from one second to several years, and your Workflows should not rely on [sub-second accuracy for Timers](https://docs.temporal.io/workflow-execution/timers-delays).
 
 ## Benefits and trade-offs
 
@@ -706,7 +707,7 @@ func CompleteJob(ctx context.Context, c client.Client, jobID string, result stri
 - **Using `time.sleep()` (non-durable)** in Pattern 2 instead of `workflow.sleep()`. A process sleep disappears on restart; only Temporal's timer is durable.
 - **Non-deterministic Workflow IDs** — generating IDs from timestamps or random values means Signal-with-Start creates a new Workflow on every webhook delivery instead of routing to the existing one.
 - **Losing the task token** in Pattern 3. If the service storing task tokens is unavailable when the callback arrives, the activity can never complete. Store the token durably (database, not in-process cache).
-- **Forgetting `doNotCompleteOnReturn()` / `CompleteAsyncError`** in Pattern 3. Without this, Temporal marks the activity as completed immediately when the function returns, before the external callback arrives.
+- **Forgetting to signal async completion** in Pattern 3 (`raise_complete_async()` in Python, `ErrResultPending` in Go, `doNotCompleteOnReturn()` in Java). Without this, Temporal marks the activity as completed immediately when the function returns, before the external callback arrives.
 
 ## Related patterns
 

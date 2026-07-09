@@ -1,5 +1,5 @@
 
-<h1>Early Return (Update with Start) <img src="/images/early-return-icon.png" alt="Early Return (Update with Start)" class="pattern-page-icon"></h1>
+<h1>Early Return (Update with Start) <img src="/images/early-return-icon.svg" alt="Early Return (Update with Start)" class="pattern-page-icon"></h1>
 
 ## Overview
 
@@ -124,6 +124,7 @@ from temporalio.client import (
     WithStartWorkflowOperation,
     WorkflowUpdateStage,
 )
+from temporalio.common import WorkflowIDConflictPolicy
 
 client = await Client.connect("localhost:7233")
 
@@ -132,7 +133,7 @@ start_op = WithStartWorkflowOperation(
     tx_request,
     id="transaction-123",
     task_queue="transactions",
-    id_conflict_policy=common_pb2.WORKFLOW_ID_CONFLICT_POLICY_FAIL,
+    id_conflict_policy=WorkflowIDConflictPolicy.FAIL,
 )
 
 update_handle = await client.start_update_with_start_workflow(

@@ -1,5 +1,5 @@
 
-<h1>Updatable / Debounced Timer Pattern <img src="/images/updatable-timer-icon.png" alt="Updatable / Debounced Timer Pattern" class="pattern-page-icon"></h1>
+<h1>Updatable / Debounced Timer Pattern <img src="/images/updatable-timer-icon.svg" alt="Updatable / Debounced Timer Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 
@@ -510,7 +510,7 @@ Each update unblocks the timer loop, which recalculates the remaining duration a
 
 The Updatable Timer pattern is a good fit for approval Workflows with deadline extensions, SLA management with grace periods, time-based escalations that can be postponed, auction bidding with extended closing times, and payment grace periods that can be adjusted.
 
-It is not a good fit for fixed timeouts that never change (use a simple sleep), immediate cancellation (use cancellation scopes), or complex scheduling (use Temporal Schedules).
+It is not a good fit for fixed timeouts that never change (use a fixed sleep), immediate cancellation (use cancellation scopes), or complex scheduling (use Temporal Schedules).
 
 ## Benefits and trade-offs
 
@@ -530,7 +530,7 @@ You must calculate absolute timestamps rather than relative durations.
 | Approach | Dynamic updates | Complexity | Use case |
 | :--- | :--- | :--- | :--- |
 | Updatable / Debounced Timer | Yes | Medium | Adjustable deadlines |
-| Simple sleep | No | Low | Fixed delays |
+| Fixed sleep | No | Low | Fixed delays |
 | Cancellation Scope | Yes (cancel only) | Medium | Abort operations |
 | Polling Loop | Yes | High | Frequent checks |
 

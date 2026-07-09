@@ -171,7 +171,7 @@ It is not a good fit when all work is effectively equal in urgency, when a conti
 
 Native priority requires no extra queues, routing logic, or additional Worker pools. A single pool of Workers serves all priority levels, so idle capacity at low-priority levels is automatically used by higher-priority work without any additional configuration.
 
-Lower-priority tasks are blocked until all higher-priority tasks at that level are drained. In an environment with a continuously replenished high-priority backlog, low-priority tasks may be significantly delayed. The built-in `PriorityKey` range is 1–5; if more than five distinct levels are needed, the feature cannot accommodate them.
+Lower-priority tasks are blocked until all higher-priority tasks have started. In an environment with a continuously replenished high-priority backlog, low-priority tasks may be significantly delayed. The built-in `PriorityKey` range is 1–5; if more than five distinct levels are needed, the feature cannot accommodate them.
 
 ## Comparison with alternatives
 

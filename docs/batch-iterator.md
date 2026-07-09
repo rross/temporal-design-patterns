@@ -1,5 +1,5 @@
 
-# Batch Iterator
+<h1>Batch Iterator <img src="/images/batch-iterator-icon.svg" alt="Batch Iterator" class="pattern-page-icon"></h1>
 
 :::info TLDR
 **Process one page at a time** and call Continue-as-New with the next offset after each page so the Workflow's event history never grows without bound. With this method you can process infinite pages. Use this when your record set is arbitrarily large, you need a durable checkpoint after every page, and sequential page-by-page throughput is acceptable.
@@ -120,7 +120,7 @@ class BatchIteratorWorkflow:
         )
 
         if len(page) == PAGE_SIZE:
-            continue_as_new(offset + PAGE_SIZE, total_processed)
+            continue_as_new(args=[offset + PAGE_SIZE, total_processed])
 
         return total_processed
 ```
@@ -130,6 +130,8 @@ class BatchIteratorWorkflow:
 package main
 
 import (
+	"time"
+
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -200,8 +202,8 @@ public class BatchIteratorWorkflowImpl implements BatchIteratorWorkflow {
         );
 
         if (page.size() == Shared.PAGE_SIZE) {
-            throw Workflow.newContinueAsNewStub(BatchIteratorWorkflow.class)
-                .run(offset + Shared.PAGE_SIZE, totalProcessed);
+            BatchIteratorWorkflow next = Workflow.newContinueAsNewStub(BatchIteratorWorkflow.class);
+            next.run(offset + Shared.PAGE_SIZE, totalProcessed);
         }
 
         return totalProcessed;
