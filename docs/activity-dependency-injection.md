@@ -1,5 +1,5 @@
 
-<h1>Activity Dependency Injection <img src="/images/activity-dependency-injection-icon.png" alt="Activity Dependency Injection" class="pattern-page-icon"></h1>
+<h1>Activity Dependency Injection <img src="/images/activity-dependency-injection-icon.svg" alt="Activity Dependency Injection" class="pattern-page-icon"></h1>
 
 ## Overview
 

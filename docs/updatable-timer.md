@@ -1,5 +1,5 @@
 
-<h1>Updatable / Debounced Timer Pattern <img src="/images/updatable-timer-icon.png" alt="Updatable / Debounced Timer Pattern" class="pattern-page-icon"></h1>
+<h1>Updatable / Debounced Timer Pattern <img src="/images/updatable-timer-icon.svg" alt="Updatable / Debounced Timer Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 

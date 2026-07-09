@@ -1,5 +1,5 @@
 
-<h1>Parallel Execution <img src="/images/parallel-execution-icon.png" alt="Parallel Execution" class="pattern-page-icon"></h1>
+<h1>Parallel Execution <img src="/images/parallel-execution-icon.svg" alt="Parallel Execution" class="pattern-page-icon"></h1>
 
 ## Overview
 

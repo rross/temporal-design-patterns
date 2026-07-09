@@ -1,5 +1,5 @@
 
-<h1>Entity Workflow Pattern <img src="/images/entity-workflow-icon.png" alt="Entity Workflow Pattern" class="pattern-page-icon"></h1>
+<h1>Entity Workflow Pattern <img src="/images/entity-workflow-icon.svg" alt="Entity Workflow Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 

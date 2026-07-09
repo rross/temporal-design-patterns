@@ -1,4 +1,4 @@
-<h1>Delayed Callback (Webhooks) <img src="/images/webhooks-icon.png" alt="Delayed Callback (Webhooks)" class="pattern-page-icon"></h1>
+<h1>Delayed Callback (Webhooks) <img src="/images/webhooks-icon.svg" alt="Delayed Callback (Webhooks)" class="pattern-page-icon"></h1>
 
 ## Overview
 Delayed Callback patterns in Temporal manage delayed completion notification between two systems. They use durable timers, and you define the behavior entirely in code.

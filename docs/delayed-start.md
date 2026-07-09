@@ -1,5 +1,5 @@
 
-<h1>Delayed Start Pattern <img src="/images/delayed-start-icon.png" alt="Delayed Start Pattern" class="pattern-page-icon"></h1>
+<h1>Delayed Start Pattern <img src="/images/delayed-start-icon.svg" alt="Delayed Start Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 

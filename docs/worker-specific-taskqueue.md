@@ -1,5 +1,5 @@
 
-<h1>Worker-Specific Task Queues Pattern <img src="/images/worker-specific-taskqueue-icon.png" alt="Worker-Specific Task Queues Pattern" class="pattern-page-icon"></h1>
+<h1>Worker-Specific Task Queues Pattern <img src="/images/worker-specific-taskqueue-icon.svg" alt="Worker-Specific Task Queues Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 

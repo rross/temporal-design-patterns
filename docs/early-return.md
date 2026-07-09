@@ -1,5 +1,5 @@
 
-<h1>Early Return (Update with Start) <img src="/images/early-return-icon.png" alt="Early Return (Update with Start)" class="pattern-page-icon"></h1>
+<h1>Early Return (Update with Start) <img src="/images/early-return-icon.svg" alt="Early Return (Update with Start)" class="pattern-page-icon"></h1>
 
 ## Overview
 

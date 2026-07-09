@@ -1,5 +1,5 @@
 
-<h1>Long-Running Activity - Tracking Progress and Handling Cancellation with Heartbeats <img src="/images/long-running-activity-icon.png" alt="Long-Running Activity - Tracking Progress and Handling Cancellation with Heartbeats" class="pattern-page-icon"></h1>
+<h1>Long-Running Activity - Tracking Progress and Handling Cancellation with Heartbeats <img src="/images/long-running-activity-icon.svg" alt="Long-Running Activity - Tracking Progress and Handling Cancellation with Heartbeats" class="pattern-page-icon"></h1>
 
 ## Overview
 
