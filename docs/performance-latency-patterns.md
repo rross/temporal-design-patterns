@@ -96,9 +96,9 @@ Dispatch the first Workflow Task directly to a co-located Worker, bypassing the 
 
 ## Related Sections
 
-- [Distributed Transaction Patterns](/distributed-transaction-patterns) — the [Early Return](/early-return) pattern lives there, describing the Update-with-Start mechanism in detail
-- [Worker Configuration Patterns](/worker-configuration-patterns) — tuning Worker concurrency and task queue assignments that affect throughput
-- [QoS & Throughput Patterns](/qos-throughput-patterns) — rate limiting and fairness patterns for high-volume workloads
+- Distributed Transaction Patterns — the [Early Return](/early-return) pattern lives there, describing the Update-with-Start mechanism in detail
+- Worker Configuration Patterns — tuning Worker concurrency and task queue assignments that affect throughput; see [Worker-Specific Task Queues](/worker-specific-taskqueue)
+- QoS & Throughput Patterns — rate limiting and fairness patterns for high-volume workloads; see [Downstream Rate Limiting](/downstream-rate-limiting) and [Fairness](/fairness)
 
 <style>
 .pattern-grid {
