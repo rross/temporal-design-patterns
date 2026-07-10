@@ -2,7 +2,7 @@
 Eager Workflow Start demo: worker and starter run in the same process.
 
 The worker is started as a background task before the workflow is executed.
-The Temporal client is created with eager_start=True so the server can
+The Temporal client is created with request_eager_start=True so the server can
 dispatch the first workflow task directly to this worker — bypassing the
 Matching Service queue and removing one server round-trip.
 """
@@ -44,9 +44,9 @@ async def main() -> None:
         req,
         id=workflow_id,
         task_queue=TASK_QUEUE,
-        # eager_start tells the server to dispatch the first WFT directly to
-        # this co-located worker process rather than going through Matching.
-        eager_start=True,
+        # request_eager_start tells the server to dispatch the first WFT directly
+        # to this co-located worker process rather than going through Matching.
+        request_eager_start=True,
     )
     elapsed_ms = int((time.monotonic() - t0) * 1000)
     print(f"Transaction complete after {elapsed_ms}ms: ID={result.id} Status={result.status}")

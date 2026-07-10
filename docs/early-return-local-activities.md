@@ -286,7 +286,6 @@ public class Impl implements TransactionWorkflow {
 - **Keep Phase 1 Local Activities short.** Each must complete well within the Workflow Task timeout (default 10 seconds). Aim for under 5 seconds total for all Phase 1 work.
 - **Design Phase 1 for at-least-once execution.** If the Workflow Task that runs Phase 1 fails and retries, all Phase 1 Local Activities re-execute. Phase 1 operations must be idempotent.
 - **Separate Phase 1 and Phase 2 concerns cleanly.** The Update handler should wait only on the Phase 1 sentinel flag, not on any Phase 2 state. Phase 2 should be independent enough to proceed without client involvement.
-- **Use `scheduleToCloseTimeout` for Local Activities.** The `startToCloseTimeout` field is ignored for Local Activities. Set `scheduleToCloseTimeout` to bound the total time including retries.
 - **Set appropriate timeouts for Phase 2.** Phase 2 regular Activities run in the background and should have a `startToCloseTimeout` that reflects the maximum acceptable settlement time.
 
 ## Common Pitfalls

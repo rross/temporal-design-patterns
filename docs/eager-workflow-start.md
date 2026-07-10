@@ -46,7 +46,7 @@ For applications where the starter and Worker share the same deployment unit—s
 
 ## Solution
 
-Start a Worker in the same process as the workflow starter, using the same client connection. Set `EnableEagerStart: true` (Go), `setDisableEagerExecution(false)` (Java), or `eager_start=True` (Python) on the `StartWorkflowOptions`. The SDK signals to the server that a local Worker is available, and the server returns the first Workflow Task inline.
+Start a Worker in the same process as the workflow starter, using the same client connection. Set `EnableEagerStart: true` (Go), `setDisableEagerExecution(false)` (Java), or `request_eager_start=True` (Python) on the `StartWorkflowOptions`. The SDK signals to the server that a local Worker is available, and the server returns the first Workflow Task inline.
 
 :::warning Feature flag for self-hosted Temporal
 On self-hosted Temporal Server, Eager Workflow Start may require enabling a dynamic config flag:
@@ -86,7 +86,7 @@ async def main():
             TransactionRequest(amount=100.00, currency="USD"),
             id="eager-workflow-start-demo",
             task_queue=TASK_QUEUE,
-            eager_start=True,  # Dispatch first WorkflowTask inline
+            request_eager_start=True,  # Dispatch first WorkflowTask inline
         )
         print(f"Transaction complete: ID={result.id} Status={result.status}")
 
@@ -191,7 +191,7 @@ The TypeScript SDK does not currently support Eager Workflow Start. Use [Local A
 | Worker co-location required | No | Yes (same process + client) |
 | Fallback behavior | N/A | Graceful fallback to normal dispatch |
 | TypeScript SDK support | Yes | No |
-| Configuration required | None | `EnableEagerStart`/`eager_start`/`setDisableEagerExecution(false)` |
+| Configuration required | None | `EnableEagerStart`/`request_eager_start`/`setDisableEagerExecution(false)` |
 | Self-hosted server flag | N/A | May need `system.enableEagerWorkflowStart=true` |
 
 ## Best Practices

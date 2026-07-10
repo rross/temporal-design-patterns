@@ -170,7 +170,6 @@ public class Impl implements TransactionWorkflow {
 
 ## Best Practices
 
-- **Use `scheduleToCloseTimeout`, not `startToCloseTimeout`.** Local Activities do not have a separate start event, so `startToCloseTimeout` is meaningless and ignored by most SDKs.
 - **Design for at-least-once execution.** If a Workflow Task fails after a Local Activity completes but before the task is persisted, all Local Activities in that task re-execute on the next attempt. Your Activity logic must tolerate this.
 - **Keep each Local Activity short.** Aim for well under 5 seconds to leave headroom for retries within the same Workflow Task, which has a 10-second default timeout.
 - **Avoid blocking signal and update handlers.** While a Local Activity executes, the Workflow Task is occupied. Incoming signals and updates accumulate in the server buffer and are not processed until the next task begins.
@@ -180,7 +179,6 @@ public class Impl implements TransactionWorkflow {
 
 - **Exceeding the Workflow Task timeout.** If a Local Activity takes longer than the Workflow Task timeout (default 10 seconds), the entire task times out and retries—including any Local Activities that already completed in memory during that task.
 - **Assuming exactly-once semantics.** Unlike regular Activities, a Local Activity does not get its own persisted history event until the Workflow Task completes. A crashed Worker causes the whole task to re-run. This compounds when Local Activities are chained: if a Worker crashes after the third of five sequential Local Activities, all five re-execute on the next attempt. If you need a durable checkpoint between each step, use regular Activities instead.
-- **Using `startToCloseTimeout` instead of `scheduleToCloseTimeout`.** This field is ignored for Local Activities in most SDKs, which can lead to confusing behavior where the timeout you set has no effect.
 - **Long retry intervals.** Each retry attempt with back-off creates a server-side timer event. For truly short Activities, use a tight `scheduleToCloseTimeout` and allow immediate retries rather than spaced-out back-off.
 
 ## Related Patterns
