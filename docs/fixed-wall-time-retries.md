@@ -283,6 +283,7 @@ const { authorizeTransaction } = wf.proxyActivities<typeof activities>({
 
 - [Fixed Count of Retries](fixed-count-retries.md): Bound by attempt count rather than elapsed time.
 - [Delayed Retry](delayed-retry.md): Fixed-interval retry when the downstream unavailability window is known.
+- [Error Handling & Retry Patterns](error-handling-patterns.md): Overview and decision tree for all retry patterns.
 
 ## References
 

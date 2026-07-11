@@ -534,3 +534,4 @@ stateDiagram-v2
 - [Non-Retryable Errors](non-retryable-errors.md): Fail immediately without parking when the error is structural and no correction is expected.
 - [Fast/Slow Retries](fast-slow-retries.md): Infinite patient retries when the downstream system is temporarily unavailable.
 - [Signal with Start](signal-with-start.md): Start the Workflow and send the correction Signal atomically.
+- [Error Handling & Retry Patterns](error-handling-patterns.md): Overview and decision tree for all retry patterns.

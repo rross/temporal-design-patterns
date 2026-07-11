@@ -69,3 +69,164 @@ h1:has(.pattern-page-icon) {
   margin-top: 32px !important;
   margin-bottom: 4px !important;
 }
+
+/* Pattern icons on sidebar links (child pattern links only, not section overview headers) */
+.VPSidebar .VPSidebarItem.level-1.is-link > .item > .VPLink.link {
+  display: flex;
+  align-items: center;
+}
+.VPSidebar .VPSidebarItem.level-1.is-link > .item > .VPLink.link::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 20px;
+  height: 16px;
+  margin-right: 8px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: 0.9;
+}
+.VPSidebar a.VPLink.link[href$="/activity-dependency-injection.html"]::before,
+.VPSidebar a.VPLink.link[href$="/activity-dependency-injection"]::before {
+  background-image: url(/images/activity-dependency-injection-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/approval.html"]::before,
+.VPSidebar a.VPLink.link[href$="/approval"]::before {
+  background-image: url(/images/approval-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/batch-iterator.html"]::before,
+.VPSidebar a.VPLink.link[href$="/batch-iterator"]::before {
+  background-image: url(/images/batch-iterator-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/child-workflows.html"]::before,
+.VPSidebar a.VPLink.link[href$="/child-workflows"]::before {
+  background-image: url(/images/child-workflows-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/continue-as-new.html"]::before,
+.VPSidebar a.VPLink.link[href$="/continue-as-new"]::before {
+  background-image: url(/images/continue-as-new-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/delayed-callback.html"]::before,
+.VPSidebar a.VPLink.link[href$="/delayed-callback"]::before {
+  background-image: url(/images/webhooks-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/delayed-retry.html"]::before,
+.VPSidebar a.VPLink.link[href$="/delayed-retry"]::before {
+  background-image: url(/images/delayed-retry-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/delayed-start.html"]::before,
+.VPSidebar a.VPLink.link[href$="/delayed-start"]::before {
+  background-image: url(/images/delayed-start-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/downstream-rate-limiting.html"]::before,
+.VPSidebar a.VPLink.link[href$="/downstream-rate-limiting"]::before {
+  background-image: url(/images/downstream-rate-limiting-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/early-return.html"]::before,
+.VPSidebar a.VPLink.link[href$="/early-return"]::before {
+  background-image: url(/images/early-return-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/entity-workflow.html"]::before,
+.VPSidebar a.VPLink.link[href$="/entity-workflow"]::before {
+  background-image: url(/images/entity-workflow-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/event-accumulator.html"]::before,
+.VPSidebar a.VPLink.link[href$="/event-accumulator"]::before {
+  background-image: url(/images/event-accumulator-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/fairness.html"]::before,
+.VPSidebar a.VPLink.link[href$="/fairness"]::before {
+  background-image: url(/images/fairness-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/fanout-child-workflows.html"]::before,
+.VPSidebar a.VPLink.link[href$="/fanout-child-workflows"]::before {
+  background-image: url(/images/fanout-child-workflows-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/fast-slow-retries.html"]::before,
+.VPSidebar a.VPLink.link[href$="/fast-slow-retries"]::before {
+  background-image: url(/images/fast-slow-retries-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/fixed-count-retries.html"]::before,
+.VPSidebar a.VPLink.link[href$="/fixed-count-retries"]::before {
+  background-image: url(/images/fixed-count-retries-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/fixed-wall-time-retries.html"]::before,
+.VPSidebar a.VPLink.link[href$="/fixed-wall-time-retries"]::before {
+  background-image: url(/images/fixed-wall-time-retries-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/idempotent-distributed-transactions.html"]::before,
+.VPSidebar a.VPLink.link[href$="/idempotent-distributed-transactions"]::before {
+  background-image: url(/images/idempotent-distributed-transactions-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/long-running-activity.html"]::before,
+.VPSidebar a.VPLink.link[href$="/long-running-activity"]::before {
+  background-image: url(/images/long-running-activity-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/mapreduce-tree.html"]::before,
+.VPSidebar a.VPLink.link[href$="/mapreduce-tree"]::before {
+  background-image: url(/images/mapreduce-tree-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/non-retryable-errors.html"]::before,
+.VPSidebar a.VPLink.link[href$="/non-retryable-errors"]::before {
+  background-image: url(/images/non-retryable-errors-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/parallel-execution.html"]::before,
+.VPSidebar a.VPLink.link[href$="/parallel-execution"]::before {
+  background-image: url(/images/parallel-execution-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/pick-first.html"]::before,
+.VPSidebar a.VPLink.link[href$="/pick-first"]::before {
+  background-image: url(/images/pick-first-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/polling.html"]::before,
+.VPSidebar a.VPLink.link[href$="/polling"]::before {
+  background-image: url(/images/polling-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/priority-task-queues.html"]::before,
+.VPSidebar a.VPLink.link[href$="/priority-task-queues"]::before {
+  background-image: url(/images/priority-task-queues-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/request-response-via-updates.html"]::before,
+.VPSidebar a.VPLink.link[href$="/request-response-via-updates"]::before {
+  background-image: url(/images/request-response-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/resumable-activity.html"]::before,
+.VPSidebar a.VPLink.link[href$="/resumable-activity"]::before {
+  background-image: url(/images/resumable-activity-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/retry-metrics.html"]::before,
+.VPSidebar a.VPLink.link[href$="/retry-metrics"]::before {
+  background-image: url(/images/retry-metrics-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/saga-pattern.html"]::before,
+.VPSidebar a.VPLink.link[href$="/saga-pattern"]::before {
+  background-image: url(/images/saga-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/signal-with-start.html"]::before,
+.VPSidebar a.VPLink.link[href$="/signal-with-start"]::before {
+  background-image: url(/images/signal-with-start-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/sliding-window.html"]::before,
+.VPSidebar a.VPLink.link[href$="/sliding-window"]::before {
+  background-image: url(/images/sliding-window-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/updatable-timer.html"]::before,
+.VPSidebar a.VPLink.link[href$="/updatable-timer"]::before {
+  background-image: url(/images/updatable-timer-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/worker-specific-taskqueue.html"]::before,
+.VPSidebar a.VPLink.link[href$="/worker-specific-taskqueue"]::before {
+  background-image: url(/images/worker-specific-taskqueue-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/local-activities.html"]::before,
+.VPSidebar a.VPLink.link[href$="/local-activities"]::before {
+  background-image: url(/images/local-activities-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/early-return-local-activities.html"]::before,
+.VPSidebar a.VPLink.link[href$="/early-return-local-activities"]::before {
+  background-image: url(/images/early-return-local-activities-icon.svg);
+}
+.VPSidebar a.VPLink.link[href$="/eager-workflow-start.html"]::before,
+.VPSidebar a.VPLink.link[href$="/eager-workflow-start"]::before {
+  background-image: url(/images/eager-workflow-start-icon.svg);
+}

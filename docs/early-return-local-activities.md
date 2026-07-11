@@ -1,4 +1,4 @@
-# Early Return + Local Activities
+<h1>Early Return + Local Activities <img src="/images/early-return-local-activities-icon.svg" alt="Early Return + Local Activities" class="pattern-page-icon"></h1>
 
 :::info TLDR
 **Combine Update-with-Start with Local Activities in the synchronous Phase 1 to reduce first-response latency from ~265 ms to ~160 ms.** Phase 1 (initialization) runs as Local Activities with no server round-trips. Phase 2 (settlement) runs as regular Activities in the background. The client receives its response as soon as Phase 1 completes, so the in-process execution speed of Local Activities directly improves the time-to-first-byte.
