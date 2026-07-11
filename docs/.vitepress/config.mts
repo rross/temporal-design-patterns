@@ -20,21 +20,12 @@ gtag('config', 'G-KCHNTGYY7N');`]
     ],
     sidebar: [
       {
-        text: 'Distributed Transaction Patterns',
-        link: '/distributed-transaction-patterns',
+        text: 'Task Orchestration Patterns',
+        link: '/task-orchestration-patterns',
         items: [
-          { text: 'Saga Pattern', link: '/saga-pattern' },
-          { text: 'Early Return', link: '/early-return' },
-          { text: 'Idempotent Distributed Transactions', link: '/idempotent-distributed-transactions' }
-        ]
-      },
-      {
-        text: 'Entity & Lifecycle Patterns',
-        link: '/entity-lifecycle-patterns',
-        items: [
-          { text: 'Entity Workflow', link: '/entity-workflow' },
-          { text: 'Continue-As-New', link: '/continue-as-new' },
-          { text: 'Updatable Timer', link: '/updatable-timer' }
+          { text: 'Child Workflows', link: '/child-workflows' },
+          { text: 'Parallel Execution', link: '/parallel-execution' },
+          { text: 'Pick First (Race)', link: '/pick-first' }
         ]
       },
       {
@@ -47,12 +38,12 @@ gtag('config', 'G-KCHNTGYY7N');`]
         ]
       },
       {
-        text: 'Task Orchestration Patterns',
-        link: '/task-orchestration-patterns',
+        text: 'Entity & Lifecycle Patterns',
+        link: '/entity-lifecycle-patterns',
         items: [
-          { text: 'Child Workflows', link: '/child-workflows' },
-          { text: 'Parallel Execution', link: '/parallel-execution' },
-          { text: 'Pick First (Race)', link: '/pick-first' }
+          { text: 'Entity Workflow', link: '/entity-workflow' },
+          { text: 'Continue-As-New', link: '/continue-as-new' },
+          { text: 'Updatable Timer', link: '/updatable-timer' }
         ]
       },
       {
@@ -61,9 +52,17 @@ gtag('config', 'G-KCHNTGYY7N');`]
         items: [
           { text: 'Polling External Services', link: '/polling' },
           { text: 'Long Running Activity', link: '/long-running-activity' },
-          { text: 'Approval', link: '/approval' },
           { text: 'Delayed Start', link: '/delayed-start' },
-          { text: 'Delayed Callback', link: '/delayed-callback' }
+          { text: 'Delayed Callback', link: '/delayed-callback' },
+          { text: 'Approval', link: '/approval' }
+        ]
+      },
+      {
+        text: 'Distributed Transaction Patterns',
+        link: '/distributed-transaction-patterns',
+        items: [
+          { text: 'Saga Pattern', link: '/saga-pattern' },
+          { text: 'Early Return', link: '/early-return' }
         ]
       },
       {
@@ -80,11 +79,13 @@ gtag('config', 'G-KCHNTGYY7N');`]
         ]
       },
       {
-        text: 'Worker Configuration Patterns',
-        link: '/worker-configuration-patterns',
+        text: 'Batch Processing Patterns',
+        link: '/batch-processing-patterns',
         items: [
-          { text: 'Worker-Specific Task Queues', link: '/worker-specific-taskqueue' },
-          { text: 'Activity Dependency Injection', link: '/activity-dependency-injection' }
+          { text: 'Fan-Out with Child Workflows', link: '/fanout-child-workflows' },
+          { text: 'Batch Iterator', link: '/batch-iterator' },
+          { text: 'Sliding Window', link: '/sliding-window' },
+          { text: 'MapReduce Tree', link: '/mapreduce-tree' }
         ]
       },
       {
@@ -97,22 +98,20 @@ gtag('config', 'G-KCHNTGYY7N');`]
         ]
       },
       {
-        text: 'Batch Processing Patterns',
-        link: '/batch-processing-patterns',
-        items: [
-          { text: 'Fan-Out with Child Workflows', link: '/fanout-child-workflows' },
-          { text: 'Batch Iterator', link: '/batch-iterator' },
-          { text: 'Sliding Window', link: '/sliding-window' },
-          { text: 'MapReduce Tree', link: '/mapreduce-tree' }
-        ]
-      },
-      {
         text: 'Performance & Latency Patterns',
         link: '/performance-latency-patterns',
         items: [
           { text: 'Local Activities', link: '/local-activities' },
           { text: 'Early Return + Local Activities', link: '/early-return-local-activities' },
           { text: 'Eager Workflow Start', link: '/eager-workflow-start' }
+        ]
+      },
+      {
+        text: 'Worker Configuration Patterns',
+        link: '/worker-configuration-patterns',
+        items: [
+          { text: 'Worker-Specific Task Queues', link: '/worker-specific-taskqueue' },
+          { text: 'Activity Dependency Injection', link: '/activity-dependency-injection' }
         ]
       },
     ],
