@@ -1,4 +1,4 @@
-# Local Activities
+<h1>Local Activities <img src="/images/local-activities-icon.svg" alt="Local Activities" class="pattern-page-icon"></h1>
 
 :::info TLDR
 **Replace regular Activities with Local Activities to eliminate Temporal server round-trips and reduce per-Activity overhead to near zero.** This is best for short-lived, idempotent Activities that complete well within the Workflow Task timeout. Each Activity you convert saves approximately 50 ms of scheduling overhead on Temporal Cloud. If you haven't measured a latency problem, start with regular Activities—they are easier to debug, rate-limit, and monitor.

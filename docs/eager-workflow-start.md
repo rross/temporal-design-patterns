@@ -1,4 +1,4 @@
-# Eager Workflow Start
+<h1>Eager Workflow Start <img src="/images/eager-workflow-start-icon.svg" alt="Eager Workflow Start" class="pattern-page-icon"></h1>
 
 :::info TLDR
 **Bypass the Temporal Matching Service by dispatching the first Workflow Task directly to a co-located Worker.** The Worker and the client that starts the Workflow must share the same process and server connection. Eager Workflow Start eliminates the Matching Service round-trip, saving approximately 30–50 ms per Workflow start. When combined with Local Activities, this pattern achieves ~265 ms total-workflow latency (vs ~850 ms baseline). The TypeScript SDK does not support Eager Workflow Start.

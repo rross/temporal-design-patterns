@@ -21,6 +21,7 @@ gtag('config', 'G-KCHNTGYY7N');`]
     sidebar: [
       {
         text: 'Distributed Transaction Patterns',
+        link: '/distributed-transaction-patterns',
         items: [
           { text: 'Saga Pattern', link: '/saga-pattern' },
           { text: 'Early Return', link: '/early-return' },
@@ -29,6 +30,7 @@ gtag('config', 'G-KCHNTGYY7N');`]
       },
       {
         text: 'Entity & Lifecycle Patterns',
+        link: '/entity-lifecycle-patterns',
         items: [
           { text: 'Entity Workflow', link: '/entity-workflow' },
           { text: 'Continue-As-New', link: '/continue-as-new' },
@@ -37,6 +39,7 @@ gtag('config', 'G-KCHNTGYY7N');`]
       },
       {
         text: 'Workflow Messaging Patterns',
+        link: '/workflow-messaging-patterns',
         items: [
           { text: 'Signal with Start', link: '/signal-with-start' },
           { text: 'Request-Response via Updates', link: '/request-response-via-updates' },
@@ -45,6 +48,7 @@ gtag('config', 'G-KCHNTGYY7N');`]
       },
       {
         text: 'Task Orchestration Patterns',
+        link: '/task-orchestration-patterns',
         items: [
           { text: 'Child Workflows', link: '/child-workflows' },
           { text: 'Parallel Execution', link: '/parallel-execution' },
@@ -53,6 +57,7 @@ gtag('config', 'G-KCHNTGYY7N');`]
       },
       {
         text: 'External Interaction Patterns',
+        link: '/external-interaction-patterns',
         items: [
           { text: 'Polling External Services', link: '/polling' },
           { text: 'Long Running Activity', link: '/long-running-activity' },
@@ -63,6 +68,7 @@ gtag('config', 'G-KCHNTGYY7N');`]
       },
       {
         text: 'Error Handling & Retry Patterns',
+        link: '/error-handling-patterns',
         items: [
           { text: 'Fixed Count of Retries', link: '/fixed-count-retries' },
           { text: 'Fixed Wall-Time Retries', link: '/fixed-wall-time-retries' },
@@ -75,6 +81,7 @@ gtag('config', 'G-KCHNTGYY7N');`]
       },
       {
         text: 'Worker Configuration Patterns',
+        link: '/worker-configuration-patterns',
         items: [
           { text: 'Worker-Specific Task Queues', link: '/worker-specific-taskqueue' },
           { text: 'Activity Dependency Injection', link: '/activity-dependency-injection' }
@@ -82,6 +89,7 @@ gtag('config', 'G-KCHNTGYY7N');`]
       },
       {
         text: 'QoS & Throughput Patterns',
+        link: '/qos-throughput-patterns',
         items: [
           { text: 'Downstream Rate Limiting', link: '/downstream-rate-limiting' },
           { text: 'Priority Task Queues', link: '/priority-task-queues' },
@@ -90,6 +98,7 @@ gtag('config', 'G-KCHNTGYY7N');`]
       },
       {
         text: 'Batch Processing Patterns',
+        link: '/batch-processing-patterns',
         items: [
           { text: 'Fan-Out with Child Workflows', link: '/fanout-child-workflows' },
           { text: 'Batch Iterator', link: '/batch-iterator' },
@@ -99,8 +108,8 @@ gtag('config', 'G-KCHNTGYY7N');`]
       },
       {
         text: 'Performance & Latency Patterns',
+        link: '/performance-latency-patterns',
         items: [
-          { text: 'Overview', link: '/performance-latency-patterns' },
           { text: 'Local Activities', link: '/local-activities' },
           { text: 'Early Return + Local Activities', link: '/early-return-local-activities' },
           { text: 'Eager Workflow Start', link: '/eager-workflow-start' }

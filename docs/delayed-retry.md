@@ -234,6 +234,7 @@ export async function apiWorkflow(endpoint: string): Promise<string> {
 - [Fixed Count of Retries](fixed-count-retries.md): Cap total attempts to prevent unbounded retry cost.
 - [Fixed Wall-Time Retries](fixed-wall-time-retries.md): Enforce a total elapsed time budget across all attempts.
 - [Fast/Slow Retries](fast-slow-retries.md): Shift from a fast retry cadence to a slow one after initial attempts are exhausted.
+- [Error Handling & Retry Patterns](error-handling-patterns.md): Overview and decision tree for all retry patterns.
 
 ## References
 
