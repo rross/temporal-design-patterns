@@ -25,16 +25,6 @@ Distributed transactions span multiple services that each own their own data, wi
 </a>
 </div>
 
-<div class="pattern-tile">
-<a href="idempotent-distributed-transactions">
-<div class="pattern-tile-header">
-<img src="/images/idempotent-distributed-transactions-icon.svg" alt="Idempotent Distributed Transactions">
-<span>Idempotent Distributed Transactions</span>
-</div>
-<p>Coordinates multi-step operations across external services with safe retries, automatic rollback on failure, and protection against duplicate submissions.</p>
-</a>
-</div>
-
 </div>
 
 ## Choosing a Pattern
@@ -42,8 +32,6 @@ Distributed transactions span multiple services that each own their own data, wi
 **You need to undo completed steps when a later step fails**: use the [Saga Pattern](/saga-pattern) and define a compensation for every step that has an external effect.
 
 **You need to respond to the caller before the transaction finishes**: use [Early Return](/early-return) to acknowledge after initialization and continue processing in the background.
-
-**Your steps call external services that must not double-apply**: use [Idempotent Distributed Transactions](/idempotent-distributed-transactions) to make each step safe to retry.
 
 ## Related Sections
 

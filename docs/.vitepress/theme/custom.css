@@ -154,10 +154,6 @@ h1:has(.pattern-page-icon) {
 .VPSidebar a.VPLink.link[href$="/fixed-wall-time-retries"]::before {
   background-image: url(/images/fixed-wall-time-retries-icon.svg);
 }
-.VPSidebar a.VPLink.link[href$="/idempotent-distributed-transactions.html"]::before,
-.VPSidebar a.VPLink.link[href$="/idempotent-distributed-transactions"]::before {
-  background-image: url(/images/idempotent-distributed-transactions-icon.svg);
-}
 .VPSidebar a.VPLink.link[href$="/long-running-activity.html"]::before,
 .VPSidebar a.VPLink.link[href$="/long-running-activity"]::before {
   background-image: url(/images/long-running-activity-icon.svg);
