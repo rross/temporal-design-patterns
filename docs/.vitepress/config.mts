@@ -6,6 +6,7 @@ export default withMermaid(defineConfig({
   description: 'Common catalog of reusable patterns for Temporal workflows',
   base: process.env.VITEPRESS_BASE ?? '/temporal-design-patterns/',
   head: [
+    ['meta', { name: 'robots', content: 'noindex, follow' }],
     // Google tag (gtag.js)
     ['script', { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=G-KCHNTGYY7N' }],
     ['script', {}, `window.dataLayer = window.dataLayer || [];
