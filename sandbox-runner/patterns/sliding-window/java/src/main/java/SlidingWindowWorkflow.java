@@ -1,5 +1,4 @@
 import io.temporal.activity.ActivityOptions;
-import io.temporal.api.common.v1.WorkflowExecution;
 import io.temporal.api.enums.v1.ParentClosePolicy;
 import io.temporal.workflow.*;
 
@@ -22,60 +21,46 @@ public interface SlidingWindowWorkflow {
     @WorkflowInterface
     interface Child {
         @WorkflowMethod
-        void run(String recordId, String parentWorkflowId);
+        void run(String recordId);
     }
 
     final class ParentImpl implements Parent {
-        /** IDs of records currently being processed; null until run() initialises it. */
-        private Set<String> currentRecords;
-        /** Completions that arrive via signal before run() sets currentRecords. */
-        private final Set<String> recordsToRemove = new HashSet<>();
+        // Live in-flight count: +1 per start, -1 per completion signal, carried across runs.
+        // Instance field (not a run() local) because the signal handler is a separate
+        // method and completions can signal before run() starts.
+        private int active = 0;
+        // Total records completed across all runs, carried over via Continue-as-New.
         private int totalProcessed = 0;
 
         @Override
         public void recordCompleted(String recordId) {
-            if (currentRecords == null) {
-                // Signal arrived before run() started — buffer it.
-                recordsToRemove.add(recordId);
-                return;
-            }
-            // Dedupe: remove returns false if the ID was already absent.
-            if (currentRecords.remove(recordId)) {
-                totalProcessed++;
-            }
+            active--;
+            totalProcessed++;
         }
 
         @Override
         public int run(Shared.SlidingWindowInput input) {
-            this.totalProcessed = input.totalProcessed;
+            // Use += so completions that signal before run() starts are preserved; an
+            // early signal already pushed active negative, so folding input.active in
+            // yields the correct remaining count.
+            this.totalProcessed += input.totalProcessed;
+            this.active += input.active;
             int windowSize = input.windowSize > 0 ? input.windowSize : Shared.WINDOW_SIZE;
             List<String> recordIds = input.recordIds;
             String parentId = Workflow.getInfo().getWorkflowId();
             int nextIndex = input.startIndex;
+            // Children started in this run; triggers Continue-as-New once it hits windowSize.
+            int dispatched = 0;
 
-            // Restore the in-flight set carried over from the previous run.
-            this.currentRecords = new HashSet<>(
-                    input.currentRecords != null ? input.currentRecords : Collections.emptySet());
-            // Apply any completions that signalled before run() began.
-            int earlyCompleted = currentRecords.size();
-            currentRecords.removeAll(recordsToRemove);
-            this.totalProcessed += earlyCompleted - currentRecords.size();
-
-            // Track start promises so we can wait before continuing-as-new.
-            List<Promise<WorkflowExecution>> childrenStarted = new ArrayList<>();
-
-            while (true) {
-                // Block until the window has a free slot.
-                Workflow.await(() -> currentRecords.size() < windowSize);
-
-                // No more records to launch — drain remaining children and finish.
-                if (nextIndex >= recordIds.size()) {
-                    Workflow.await(() -> currentRecords.isEmpty());
-                    Workflow.getLogger(ParentImpl.class)
-                            .info("Sliding window complete: total={} totalProcessed={}",
-                                    recordIds.size(), this.totalProcessed);
-                    return this.totalProcessed;
-                }
+            // Slide the window: keep the window full, starting one child per free slot.
+            // The first (windowSize - active) slots are already free, so those children
+            // start without waiting; after that, each start waits for an in-flight child
+            // to signal that its slot has freed.
+            while (nextIndex < recordIds.size()) {
+                // Backpressure: block until the window has a free slot. Returns immediately
+                // when one is free; when full it waits for a child's completion signal to
+                // decrement active via the handler.
+                Workflow.await(() -> active < windowSize);
 
                 String recordId = recordIds.get(nextIndex);
                 ChildWorkflowOptions opts = ChildWorkflowOptions.newBuilder()
@@ -84,25 +69,33 @@ public interface SlidingWindowWorkflow {
                         .setParentClosePolicy(ParentClosePolicy.PARENT_CLOSE_POLICY_ABANDON)
                         .build();
                 Child child = Workflow.newChildWorkflowStub(Child.class, opts);
-                Async.procedure(child::run, recordId, parentId);
-                // Resolves when the child has actually started (needed before CAN).
-                childrenStarted.add(Workflow.getWorkflowExecution(child));
-                currentRecords.add(recordId);
+                Async.procedure(child::run, recordId);
+                // Wait until the child has actually started before counting it (and before
+                // any Continue-as-New, which would otherwise race child startup).
+                Workflow.getWorkflowExecution(child).get();
                 nextIndex++;
+                dispatched++;
+                active++;
 
-                // Continue-as-New after starting windowSize children to keep history short.
-                if (childrenStarted.size() >= windowSize) {
-                    // Wait for all children to confirm start before handing off.
-                    // Without this, CAN could race child startup and they'd never run.
-                    Promise.allOf(childrenStarted).get();
+                // Once this run has filled the window with fresh children, continue-as-new
+                // so history stays bounded. Carry active (the live in-flight count) so the
+                // next run knows exactly how many children will still signal it.
+                if (dispatched >= windowSize) {
                     Workflow.getLogger(ParentImpl.class)
                             .info("ContinueAsNew: nextIndex={} totalProcessed={}", nextIndex, this.totalProcessed);
                     Workflow.newContinueAsNewStub(Parent.class)
                             .run(new Shared.SlidingWindowInput(
-                                    recordIds, windowSize, nextIndex, this.totalProcessed, currentRecords));
+                                    recordIds, windowSize, nextIndex, this.totalProcessed, active));
                     return 0; // unreachable; CAN throws
                 }
             }
+
+            // Wait for all remaining in-flight children to complete.
+            Workflow.await(() -> active == 0);
+            Workflow.getLogger(ParentImpl.class)
+                    .info("Sliding window complete: total={} totalProcessed={}",
+                            recordIds.size(), this.totalProcessed);
+            return this.totalProcessed;
         }
     }
 
@@ -114,12 +107,14 @@ public interface SlidingWindowWorkflow {
                         .build());
 
         @Override
-        public void run(String recordId, String parentWorkflowId) {
+        public void run(String recordId) {
             activities.processRecord(recordId);
             Workflow.getLogger(ChildImpl.class).info("Processed record: {}", recordId);
 
-            // Signal the parent that this slot is now free.
+            // Signal the parent that this slot is now free. The parent's workflow ID is
+            // read from context and is stable across the parent's Continue-as-New runs.
             // Ignore if the parent has already completed (final run finished before us).
+            String parentWorkflowId = Workflow.getInfo().getParentWorkflowId().orElseThrow();
             ExternalWorkflowStub parent = Workflow.newUntypedExternalWorkflowStub(parentWorkflowId);
             try {
                 parent.signal(Shared.COMPLETION_SIGNAL, recordId);

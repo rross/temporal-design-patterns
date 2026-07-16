@@ -23,19 +23,17 @@ export const completionSignal = defineSignal<[string]>(COMPLETION_SIGNAL);
 
 /**
  * Child workflow: processes one record and signals the parent on completion.
- * The parent's workflow ID is stable across continueAsNew runs.
+ * The parent's workflow ID is read from context and is stable across the
+ * parent's continueAsNew runs.
  */
-export async function recordProcessorWorkflow(
-  recordId: string,
-  parentWorkflowId: string
-): Promise<void> {
+export async function recordProcessorWorkflow(recordId: string): Promise<void> {
   await processRecord(recordId);
   log.info(`Processed record`, { recordId });
 
   // Signal the parent that this slot is now free.
   // Ignore if the parent has already completed (final run finished before us).
   try {
-    const parent = getExternalWorkflowHandle(parentWorkflowId);
+    const parent = getExternalWorkflowHandle(workflowInfo().parent!.workflowId);
     await parent.signal(completionSignal, recordId);
   } catch (err) {
     if (err instanceof ApplicationFailure && err.type === 'NOT_FOUND') {
@@ -56,51 +54,33 @@ export async function slidingWindowWorkflow(input: SlidingWindowInput): Promise<
     recordIds,
     windowSize = WINDOW_SIZE,
     startIndex = 0,
-    inFlight = 0,
   } = input;
-  let totalProcessed = input.totalProcessed ?? 0;
   const parentId = workflowInfo().workflowId;
-  let pendingSignals = 0;
+  // Total records completed across all runs, carried over via continue-as-new.
+  let totalProcessed = input.totalProcessed ?? 0;
+  // Children started in this run; triggers continue-as-new once it hits windowSize.
   let dispatched = 0;
+  // Live in-flight count: +1 per start, -1 per completion signal, carried across runs.
+  let active = input.active ?? 0;
 
-  setHandler(completionSignal, (_recordId: string) => {
-    pendingSignals++;
+  setHandler(completionSignal, () => {
+    active--;
     totalProcessed++;
   });
 
-  // Only start (windowSize - inFlight) new children. The carried-over in-flight
-  // children from the previous run will signal us when they complete.
-  const newFill = Math.min(windowSize - inFlight, recordIds.length - startIndex);
+  // Slide the window: keep the window full, starting one child per free slot.
+  // The first (windowSize - active) slots are already free, so those children
+  // start without waiting; after that, each start waits for an in-flight child
+  // to signal that its slot has freed.
   let nextIndex = startIndex;
-  let active = inFlight;
 
-  for (let i = 0; i < newFill; i++) {
-    await startChild(recordProcessorWorkflow, {
-      args: [recordIds[nextIndex], parentId],
-      workflowId: `${parentId}/record-${recordIds[nextIndex]}`,
-      taskQueue: TASK_QUEUE,
-      parentClosePolicy: ParentClosePolicy.ABANDON,
-    });
-    nextIndex++;
-    dispatched++;
-    active++;
-  }
-
-  // If the window is full after the initial fill, continue-as-new immediately
-  // so the parent doesn't wait before handing off to the next run.
-  if (dispatched >= windowSize) {
-    log.info(`ContinueAsNew`, { nextIndex, totalProcessed });
-    await continueAsNew<typeof slidingWindowWorkflow>({ recordIds, windowSize, startIndex: nextIndex, totalProcessed, inFlight: windowSize });
-    return;
-  }
-
-  // Slide the window: as each slot frees, start the next child.
   while (nextIndex < recordIds.length) {
-    await condition(() => pendingSignals > 0);
-    pendingSignals--;
-    active--;
+    // Backpressure: block until the window has a free slot. When one is already
+    // free (active < windowSize) this returns immediately; when full it waits
+    // for a child's completion signal to decrement active via the handler.
+    await condition(() => active < windowSize);
     await startChild(recordProcessorWorkflow, {
-      args: [recordIds[nextIndex], parentId],
+      args: [recordIds[nextIndex]],
       workflowId: `${parentId}/record-${recordIds[nextIndex]}`,
       taskQueue: TASK_QUEUE,
       parentClosePolicy: ParentClosePolicy.ABANDON,
@@ -109,17 +89,17 @@ export async function slidingWindowWorkflow(input: SlidingWindowInput): Promise<
     dispatched++;
     active++;
 
+    // Once this run has filled the window with fresh children, continue-as-new
+    // so history stays bounded. Carry active (the live in-flight count) so the
+    // next run knows exactly how many children will still signal it.
     if (dispatched >= windowSize) {
       log.info(`ContinueAsNew`, { nextIndex, totalProcessed });
-      // Pass nextIndex as the next unstarted record; inFlight=windowSize because
-      // the window is always full at CAN time.
-      await continueAsNew<typeof slidingWindowWorkflow>({ recordIds, windowSize, startIndex: nextIndex, totalProcessed, inFlight: windowSize });
-      return;
+      await continueAsNew<typeof slidingWindowWorkflow>({ recordIds, windowSize, startIndex: nextIndex, totalProcessed, active });
     }
   }
 
   // Wait for all remaining in-flight children to complete.
-  await condition(() => pendingSignals >= active);
+  await condition(() => active === 0);
   log.info(`Sliding window complete`, { total: recordIds.length, totalProcessed });
   return totalProcessed;
 }

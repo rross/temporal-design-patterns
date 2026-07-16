@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public final class Shared {
     public static final String TASK_QUEUE = "sliding-window-task-queue";
@@ -26,18 +25,18 @@ public final class Shared {
         public int windowSize;
         public int startIndex;
         public int totalProcessed;
-        /** IDs of child workflows still in-flight from the previous run. */
-        public Set<String> currentRecords;
+        /** Children started but not yet completed, carried over from the previous run. */
+        public int active;
 
         public SlidingWindowInput() {}
 
         public SlidingWindowInput(List<String> recordIds, int windowSize,
-                                   int startIndex, int totalProcessed, Set<String> currentRecords) {
+                                   int startIndex, int totalProcessed, int active) {
             this.recordIds = recordIds;
             this.windowSize = windowSize;
             this.startIndex = startIndex;
             this.totalProcessed = totalProcessed;
-            this.currentRecords = currentRecords;
+            this.active = active;
         }
     }
 }

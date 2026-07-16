@@ -25,5 +25,6 @@ type SlidingWindowInput struct {
 	WindowSize     int
 	StartIndex     int
 	TotalProcessed int
-	InFlight       int
+	// Active is children started but not yet completed, carried over from the previous run.
+	Active int
 }
