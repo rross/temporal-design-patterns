@@ -45,7 +45,7 @@ flowchart TD
 The following describes each step in the diagram:
 
 1. The parent Workflow starts with a list of record IDs and a configured `windowSize`.
-2. It starts the first `windowSize` children concurrently, one per record, each receiving the parent's Workflow ID so they know where to signal.
+2. It starts the first `windowSize` children concurrently, one per record. Each child reads the parent's Workflow ID from its own context, so it knows where to signal without being passed the ID explicitly.
 3. As each child completes, it sends a completion signal to the parent.
 4. The parent receives the signal, increments its completion counter, and starts the next child (the next record in the list).
 5. After starting `windowSize` children in total, the parent calls `continueAsNew` with the updated start index. The window slides forward without gaps because the parent's Workflow ID is preserved across runs.
@@ -81,14 +81,14 @@ const { processRecord } = proxyActivities<typeof activities>({
 
 export const completionSignal = defineSignal<[string]>("recordCompleted");
 
-export async function recordProcessorWorkflow(
-  recordId: string,
-  parentWorkflowId: string
-): Promise<void> {
+// Child workflow: processes one record and signals the parent on completion.
+// The parent's workflow ID is read from context and is stable across the
+// parent's continueAsNew runs.
+export async function recordProcessorWorkflow(recordId: string): Promise<void> {
   await processRecord(recordId);
   // Ignore NOT_FOUND — the parent's final run may have already completed.
   try {
-    const parent = getExternalWorkflowHandle(parentWorkflowId);
+    const parent = getExternalWorkflowHandle(workflowInfo().parent!.workflowId);
     await parent.signal(completionSignal, recordId);
   } catch (err) {
     if (!(err instanceof ApplicationFailure && err.type === 'NOT_FOUND')) throw err;
@@ -100,49 +100,33 @@ export async function slidingWindowWorkflow(input: SlidingWindowInput): Promise<
     recordIds,
     windowSize = WINDOW_SIZE,
     startIndex = 0,
-    inFlight = 0,
   } = input;
-  let totalProcessed = input.totalProcessed ?? 0;
   const parentId = workflowInfo().workflowId;
-  let pendingSignals = 0;
-  let nextIndex = startIndex;
+  // Total records completed across all runs, carried over via continue-as-new.
+  let totalProcessed = input.totalProcessed ?? 0;
+  // Children started in this run; triggers continue-as-new once it hits windowSize.
   let dispatched = 0;
-  let active = inFlight;
+  // Live in-flight count: +1 per start, -1 per completion signal, carried across runs.
+  let active = input.active ?? 0;
 
-  // Signal handler: each completion frees a slot and increments the total.
-  setHandler(completionSignal, (_recordId: string) => {
-    pendingSignals++;
+  setHandler(completionSignal, () => {
+    active--;
     totalProcessed++;
   });
 
-  // Only start (windowSize - inFlight) new children. Carried-over in-flight
-  // children from the previous run will signal us when they complete.
-  const newFill = Math.min(windowSize - inFlight, recordIds.length - startIndex);
-  for (let i = 0; i < newFill; i++) {
-    await startChild(recordProcessorWorkflow, {
-      args: [recordIds[nextIndex], parentId],
-      workflowId: `${parentId}/record-${recordIds[nextIndex]}`,
-      taskQueue: TASK_QUEUE,
-      parentClosePolicy: ParentClosePolicy.ABANDON,
-    });
-    nextIndex++;
-    dispatched++;
-    active++;
-  }
+  // Slide the window: keep the window full, starting one child per free slot.
+  // The first (windowSize - active) slots are already free, so those children
+  // start without waiting; after that, each start waits for an in-flight child
+  // to signal that its slot has freed.
+  let nextIndex = startIndex;
 
-  // If the window is full after the initial fill, continue-as-new immediately.
-  if (dispatched >= windowSize) {
-    await continueAsNew<typeof slidingWindowWorkflow>({ recordIds, windowSize, startIndex: nextIndex, totalProcessed, inFlight: windowSize });
-    return;
-  }
-
-  // Slide the window: as each slot frees, start the next child.
   while (nextIndex < recordIds.length) {
-    await condition(() => pendingSignals > 0);
-    pendingSignals--;
-    active--;
+    // Backpressure: block until the window has a free slot. When one is already
+    // free (active < windowSize) this returns immediately; when full it waits
+    // for a child's completion signal to decrement active via the handler.
+    await condition(() => active < windowSize);
     await startChild(recordProcessorWorkflow, {
-      args: [recordIds[nextIndex], parentId],
+      args: [recordIds[nextIndex]],
       workflowId: `${parentId}/record-${recordIds[nextIndex]}`,
       taskQueue: TASK_QUEUE,
       parentClosePolicy: ParentClosePolicy.ABANDON,
@@ -151,22 +135,16 @@ export async function slidingWindowWorkflow(input: SlidingWindowInput): Promise<
     dispatched++;
     active++;
 
-    // Continue-as-New after starting windowSize children to keep history short.
-    // Pass nextIndex (next unstarted record) and inFlight=windowSize (window is full).
+    // Once this run has filled the window with fresh children, continue-as-new
+    // so history stays bounded. Carry active (the live in-flight count) so the
+    // next run knows exactly how many children will still signal it.
     if (dispatched >= windowSize) {
-      await continueAsNew<typeof slidingWindowWorkflow>({
-        recordIds,
-        windowSize,
-        startIndex: nextIndex,
-        totalProcessed,
-        inFlight: windowSize,
-      });
-      return;
+      await continueAsNew<typeof slidingWindowWorkflow>({ recordIds, windowSize, startIndex: nextIndex, totalProcessed, active });
     }
   }
 
   // Wait for all remaining in-flight children to complete.
-  await condition(() => pendingSignals >= active);
+  await condition(() => active === 0);
   return totalProcessed;
 }
 ```
@@ -186,17 +164,20 @@ COMPLETION_SIGNAL = "recordCompleted"
 
 @workflow.defn
 class RecordProcessorWorkflow:
+    # Child workflow: processes one record and signals the parent on completion.
+    # The parent's workflow ID is read from context and is stable across the
+    # parent's continue_as_new runs.
     @workflow.run
-    async def run(self, record_id: str, parent_workflow_id: str) -> None:
+    async def run(self, record_id: str) -> None:
         await workflow.execute_activity(
             process_record,
             record_id,
             start_to_close_timeout=timedelta(seconds=30),
         )
         # Ignore NOT_FOUND — the parent's final run may have already completed.
+        parent = workflow.get_external_workflow_handle(workflow.info().parent.workflow_id)
         try:
-            handle = workflow.get_external_workflow_handle(parent_workflow_id)
-            await handle.signal(COMPLETION_SIGNAL, record_id)
+            await parent.signal(COMPLETION_SIGNAL, record_id)
         except ApplicationError as e:
             if "not found" not in str(e).lower():
                 raise
@@ -205,69 +186,65 @@ class RecordProcessorWorkflow:
 @workflow.defn
 class SlidingWindowWorkflow:
     def __init__(self) -> None:
-        self._pending_signals = 0
+        # Live in-flight count: +1 per start, -1 per completion signal, carried across runs.
+        # Instance field (not a run() local) because the signal handler is a separate
+        # method and completions can signal before run() starts.
+        self._active = 0
+        # Total records completed across all runs, carried over via continue-as-new.
         self._total_processed = 0
 
     @workflow.signal(name=COMPLETION_SIGNAL)
     def record_completed(self, record_id: str) -> None:
-        self._pending_signals += 1
+        self._active -= 1
         self._total_processed += 1
 
     @workflow.run
     async def run(self, input: SlidingWindowInput) -> int:
+        # Use += so any completions that signal before run() starts are preserved.
         self._total_processed += input.total_processed
+        self._active += input.active
         record_ids = input.record_ids
         window_size = input.window_size
         start_index = input.start_index
-        in_flight = input.in_flight
         parent_id = workflow.info().workflow_id
         next_index = start_index
+        # Children started in this run; triggers continue-as-new once it hits window_size.
         dispatched = 0
-        active = in_flight
 
-        # Only start (window_size - in_flight) new children. Carried-over in-flight
-        # children from the previous run will signal us when they complete.
-        new_fill = min(window_size - in_flight, len(record_ids) - start_index)
-        for _ in range(new_fill):
-            await workflow.start_child_workflow(
-                RecordProcessorWorkflow.run,
-                args=[record_ids[next_index], parent_id],
-                id=f"{parent_id}/record-{record_ids[next_index]}",
-                task_queue=TASK_QUEUE,
-                parent_close_policy=ParentClosePolicy.ABANDON,
-            )
-            next_index += 1
-            dispatched += 1
-            active += 1
-
-        # Slide the window.
+        # Slide the window: keep the window full, starting one child per free slot.
+        # The first (window_size - active) slots are already free, so those
+        # children start without waiting; after that, each start waits for an
+        # in-flight child to signal that its slot has freed.
         while next_index < len(record_ids):
-            await workflow.wait_condition(lambda: self._pending_signals > 0)
-            self._pending_signals -= 1
-            active -= 1
+            # Backpressure: block until the window has a free slot. Returns
+            # immediately when one is free; when full it waits for a child's
+            # completion signal to decrement _active via the handler.
+            await workflow.wait_condition(lambda: self._active < window_size)
             await workflow.start_child_workflow(
                 RecordProcessorWorkflow.run,
-                args=[record_ids[next_index], parent_id],
+                record_ids[next_index],
                 id=f"{parent_id}/record-{record_ids[next_index]}",
                 task_queue=TASK_QUEUE,
                 parent_close_policy=ParentClosePolicy.ABANDON,
             )
             next_index += 1
             dispatched += 1
-            active += 1
+            self._active += 1
 
-            # Pass next_index (next unstarted record) and in_flight=window_size (window is full).
+            # Once this run has filled the window with fresh children, continue-as-new
+            # so history stays bounded. Carry _active (the live in-flight count) so the
+            # next run knows exactly how many children will still signal it.
             if dispatched >= window_size:
                 continue_as_new(args=[SlidingWindowInput(
                     record_ids=record_ids,
                     window_size=window_size,
                     start_index=next_index,
                     total_processed=self._total_processed,
-                    in_flight=window_size,
+                    active=self._active,
                 )])
 
         # Wait for all remaining in-flight children to complete.
-        await workflow.wait_condition(lambda: self._pending_signals >= active)
+        await workflow.wait_condition(lambda: self._active == 0)
         return self._total_processed
 ```
 
@@ -285,7 +262,10 @@ import (
 
 const CompletionSignal = "recordCompleted"
 
-func RecordProcessorWorkflow(ctx workflow.Context, recordID string, parentWorkflowID string) error {
+// RecordProcessorWorkflow processes one record and signals the parent on completion.
+// The parent's workflow ID is read from context and is stable across the parent's
+// ContinueAsNew runs.
+func RecordProcessorWorkflow(ctx workflow.Context, recordID string) error {
 	ao := workflow.ActivityOptions{StartToCloseTimeout: 30 * time.Second}
 	ctx = workflow.WithActivityOptions(ctx, ao)
 
@@ -294,6 +274,7 @@ func RecordProcessorWorkflow(ctx workflow.Context, recordID string, parentWorkfl
 	}
 
 	// Ignore not-found — the parent's final run may have already completed.
+	parentWorkflowID := workflow.GetInfo(ctx).ParentWorkflowExecution.ID
 	err := workflow.SignalExternalWorkflow(ctx, parentWorkflowID, "", CompletionSignal, recordID).Get(ctx, nil)
 	if err != nil && strings.Contains(err.Error(), "not found") {
 		return nil
@@ -311,9 +292,12 @@ func SlidingWindowWorkflow(ctx workflow.Context, input SlidingWindowInput) (int,
 
 	completedCh := workflow.GetSignalChannel(ctx, CompletionSignal)
 	nextIndex := input.StartIndex
+	// Total records completed across all runs, carried over via ContinueAsNew.
 	totalProcessed := input.TotalProcessed
+	// Children started in this run; triggers ContinueAsNew once it hits windowSize.
 	dispatched := 0
-	active := input.InFlight
+	// Live in-flight count: +1 per start, -1 per completion signal, carried across runs.
+	active := input.Active
 
 	startChild := func(recordID string) error {
 		cwo := workflow.ChildWorkflowOptions{
@@ -321,41 +305,24 @@ func SlidingWindowWorkflow(ctx workflow.Context, input SlidingWindowInput) (int,
 			TaskQueue:         TaskQueue,
 			ParentClosePolicy: enums.PARENT_CLOSE_POLICY_ABANDON,
 		}
-		future := workflow.ExecuteChildWorkflow(workflow.WithChildOptions(ctx, cwo), RecordProcessorWorkflow, recordID, parentID)
+		future := workflow.ExecuteChildWorkflow(workflow.WithChildOptions(ctx, cwo), RecordProcessorWorkflow, recordID)
+		// Wait for the child to be started so the command is committed before any ContinueAsNew.
 		return future.GetChildWorkflowExecution().Get(ctx, nil)
 	}
 
-	// Only start (windowSize - inFlight) new children. Carried-over in-flight
-	// children from the previous run will signal us when they complete.
-	newFill := len(recordIDs) - input.StartIndex
-	if newFill > windowSize-input.InFlight {
-		newFill = windowSize - input.InFlight
-	}
-	for i := 0; i < newFill; i++ {
-		if err := startChild(recordIDs[nextIndex]); err != nil {
-			return totalProcessed, err
-		}
-		nextIndex++
-		dispatched++
-		active++
-	}
-
-	// If the window is full after the initial fill, continue-as-new immediately.
-	if dispatched >= windowSize {
-		return 0, workflow.NewContinueAsNewError(ctx, SlidingWindowWorkflow, SlidingWindowInput{
-			RecordIDs:      recordIDs,
-			WindowSize:     windowSize,
-			StartIndex:     nextIndex,
-			TotalProcessed: totalProcessed,
-			InFlight:       windowSize,
-		})
-	}
-
-	// Slide the window.
+	// Slide the window: keep the window full, starting one child per free slot.
+	// The first (windowSize - active) slots are already free, so those children
+	// start without waiting; after that, each start waits for an in-flight child
+	// to signal that its slot has freed.
 	for nextIndex < len(recordIDs) {
-		workflow.GetSignalChannel(ctx, CompletionSignal).Receive(ctx, nil)
-		totalProcessed++
-		active--
+		// Backpressure: if the window is full, block on the completion channel
+		// until an in-flight child signals, freeing a slot (active--). When a slot
+		// is already free (active < windowSize), start without waiting.
+		if active >= windowSize {
+			completedCh.Receive(ctx, nil)
+			totalProcessed++
+			active--
+		}
 		if err := startChild(recordIDs[nextIndex]); err != nil {
 			return totalProcessed, err
 		}
@@ -363,14 +330,16 @@ func SlidingWindowWorkflow(ctx workflow.Context, input SlidingWindowInput) (int,
 		dispatched++
 		active++
 
-		// Pass nextIndex (next unstarted record) and inFlight=windowSize (window is full).
+		// Once this run has filled the window with fresh children, continue-as-new
+		// so history stays bounded. Carry active (the live in-flight count) so the
+		// next run knows exactly how many children will still signal it.
 		if dispatched >= windowSize {
 			return 0, workflow.NewContinueAsNewError(ctx, SlidingWindowWorkflow, SlidingWindowInput{
 				RecordIDs:      recordIDs,
 				WindowSize:     windowSize,
 				StartIndex:     nextIndex,
 				TotalProcessed: totalProcessed,
-				InFlight:       windowSize,
+				Active:         active,
 			})
 		}
 	}
@@ -401,55 +370,56 @@ public interface SlidingWindowWorkflow {
 
 // SlidingWindowWorkflowImpl.java
 public class SlidingWindowWorkflowImpl implements SlidingWindowWorkflow {
-    private int pendingSignals = 0;
+    // Live in-flight count: +1 per start, -1 per completion signal, carried across runs.
+    // Instance field (not a run() local) because the signal handler is a separate
+    // method and completions can signal before run() starts.
+    private int active = 0;
+    // Total records completed across all runs, carried over via Continue-as-New.
     private int totalProcessed = 0;
 
     @Override
     public void recordCompleted(String recordId) {
-        pendingSignals++;
+        active--;
         totalProcessed++;
     }
 
     @Override
     public int run(Shared.SlidingWindowInput input) {
-        this.totalProcessed = input.totalProcessed;
+        // Use += so completions that signal before run() starts are preserved.
+        this.totalProcessed += input.totalProcessed;
+        this.active += input.active;
         int windowSize = input.windowSize > 0 ? input.windowSize : Shared.WINDOW_SIZE;
         List<String> recordIds = input.recordIds;
         String parentId = Workflow.getInfo().getWorkflowId();
         int nextIndex = input.startIndex;
+        // Children started in this run; triggers Continue-as-New once it hits windowSize.
         int dispatched = 0;
-        int active = input.inFlight;
 
-        // Only start (windowSize - inFlight) new children. Carried-over in-flight
-        // children from the previous run will signal us when they complete.
-        int newFill = Math.min(windowSize - input.inFlight, recordIds.size() - input.startIndex);
-        for (int i = 0; i < newFill; i++) {
-            startChild(recordIds.get(nextIndex), parentId);
-            nextIndex++;
-            dispatched++;
-            active++;
-        }
-
-        // Slide the window.
+        // Slide the window: keep the window full, starting one child per free slot.
+        // The first (windowSize - active) slots are already free, so those children
+        // start without waiting; after that, each start waits for an in-flight child
+        // to signal that its slot has freed.
         while (nextIndex < recordIds.size()) {
-            Workflow.await(() -> pendingSignals > 0);
-            pendingSignals--;
-            active--;
+            // Backpressure: block until the window has a free slot. Returns immediately
+            // when one is free; when full it waits for a child's completion signal to
+            // decrement active via the handler.
+            Workflow.await(() -> active < windowSize);
             startChild(recordIds.get(nextIndex), parentId);
             nextIndex++;
             dispatched++;
             active++;
 
-            // Pass nextIndex (next unstarted record) and inFlight=windowSize (window is full).
+            // Once this run has filled the window with fresh children, continue-as-new
+            // so history stays bounded. Carry active (the live in-flight count) so the
+            // next run knows exactly how many children will still signal it.
             if (dispatched >= windowSize) {
                 Workflow.newContinueAsNewStub(SlidingWindowWorkflow.class)
-                    .run(new Shared.SlidingWindowInput(recordIds, windowSize, nextIndex, this.totalProcessed, windowSize));
+                    .run(new Shared.SlidingWindowInput(recordIds, windowSize, nextIndex, this.totalProcessed, active));
             }
         }
 
-        // Drain all remaining in-flight children.
-        final int remainingActive = active;
-        Workflow.await(() -> pendingSignals >= remainingActive);
+        // Wait for all remaining in-flight children to complete.
+        Workflow.await(() -> active == 0);
         return this.totalProcessed;
     }
 
@@ -460,7 +430,10 @@ public class SlidingWindowWorkflowImpl implements SlidingWindowWorkflow {
             .setParentClosePolicy(ParentClosePolicy.PARENT_CLOSE_POLICY_ABANDON)
             .build();
         RecordProcessorWorkflow child = Workflow.newChildWorkflowStub(RecordProcessorWorkflow.class, opts);
-        Async.procedure(child::run, recordId, parentId);
+        Async.procedure(child::run, recordId);
+        // Wait until the child has actually started before the loop continues (and
+        // before any Continue-as-New, which would otherwise race child startup).
+        Workflow.getWorkflowExecution(child).get();
     }
 }
 ```
@@ -477,7 +450,7 @@ public class SlidingWindowWorkflowImpl implements SlidingWindowWorkflow {
 ## Common Pitfalls
 
 - **Losing signals across Continue-as-New.** If a child signals before the parent's new run has registered the signal handler, the signal can be buffered and delivered correctly — Temporal buffers signals for existing Workflow IDs. However, ensure the signal handler is registered before any await, not conditionally.
-- **Race between CAN and remaining signal draining.** After `continueAsNew`, the new run must handle signals from children started by the previous run. Pass `nextIndex` (the next *unstarted* record) and `inFlight = windowSize` to the new run so it knows how many carried-over children to expect signals from, without re-starting them.
+- **Race between CAN and remaining signal draining.** After `continueAsNew`, the new run must handle signals from children started by the previous run. Pass `nextIndex` (the next *unstarted* record) and `active` (the live in-flight count) to the new run so it knows how many carried-over children to expect signals from, without re-starting them.
 - **Thundering herd on startup.** Starting hundreds of children simultaneously causes a burst of Activity polls. Ramp up the window gradually or use the [Batch Iterator](batch-iterator) if rate limiting is more important than throughput.
 
 ## Related Resources

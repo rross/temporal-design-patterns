@@ -12,5 +12,6 @@ export interface SlidingWindowInput {
   windowSize?: number;
   startIndex?: number;
   totalProcessed?: number;
-  inFlight?: number;
+  /** Children started but not yet completed, carried over from the previous run. */
+  active?: number;
 }

@@ -15,4 +15,5 @@ class SlidingWindowInput:
     window_size: int = WINDOW_SIZE
     start_index: int = 0
     total_processed: int = 0
-    in_flight: int = 0
+    # Children started but not yet completed, carried over from the previous run.
+    active: int = 0
